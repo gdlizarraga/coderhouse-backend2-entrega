@@ -1,0 +1,378 @@
+<div class="container py-4">
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h2 class="mb-1">
+            <i class="bi bi-people me-2"></i>
+            Gestión de Usuarios
+          </h2>
+          <p class="text-muted mb-0">
+            Administra todos los usuarios del sistema
+          </p>
+        </div>
+        <div>
+          <button
+            class="btn btn-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#addUserModal"
+          >
+            <i class="bi bi-person-plus me-1"></i>
+            Nuevo Usuario
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters and Search -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label for="searchInput" class="form-label">Buscar</label>
+          <div class="input-group">
+            <span class="input-group-text">
+              <i class="bi bi-search"></i>
+            </span>
+            <input
+              type="text"
+              class="form-control"
+              id="searchInput"
+              placeholder="Buscar por nombre o email..."
+            />
+          </div>
+        </div>
+        <div class="col-md-3">
+          <label for="roleFilter" class="form-label">Filtrar por Rol</label>
+          <select class="form-select" id="roleFilter">
+            <option value="">Todos los roles</option>
+            <option value="user">Usuario</option>
+            <option value="premium">Premium</option>
+            <option value="admin">Administrador</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label for="limitSelect" class="form-label">Usuarios por página</label>
+          <select class="form-select" id="limitSelect">
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+          <button
+            class="btn btn-outline-secondary w-100"
+            onclick="refreshUsers()"
+          >
+            <i class="bi bi-arrow-clockwise me-1"></i>
+            Actualizar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Users Table -->
+  <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">
+        <i class="bi bi-table me-1"></i>
+        Lista de Usuarios
+      </h5>
+      <span class="badge bg-primary" id="totalUsersCount">0 usuarios</span>
+    </div>
+    <div class="card-body p-0">
+      <!-- Loading State -->
+      <div id="loadingState" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Cargando...</span>
+        </div>
+        <p class="mt-2 text-muted">Cargando usuarios...</p>
+      </div>
+
+      <!-- Table -->
+      <div id="usersTableContainer" class="d-none">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Usuario</th>
+                <th>Email</th>
+                <th>Edad</th>
+                <th>Rol</th>
+                <th>Registro</th>
+                <th class="text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="usersTableBody">
+              <!-- Users will be loaded here -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div id="emptyState" class="text-center py-5 d-none">
+        <i class="bi bi-people text-muted" style="font-size: 3rem;"></i>
+        <h5 class="mt-3 text-muted">No se encontraron usuarios</h5>
+        <p class="text-muted">No hay usuarios que coincidan con los criterios de
+          búsqueda.</p>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="card-footer">
+      <nav aria-label="Paginación de usuarios">
+        <ul
+          class="pagination pagination-sm justify-content-center mb-0"
+          id="pagination"
+        >
+          <!-- Pagination will be generated here -->
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+<!-- Add User Modal -->
+<div class="modal fade" id="addUserModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-person-plus me-2"></i>
+          Crear Nuevo Usuario
+        </h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+        ></button>
+      </div>
+      <form id="addUserForm">
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="add_first_name" class="form-label">Nombre</label>
+              <input
+                type="text"
+                class="form-control"
+                id="add_first_name"
+                name="first_name"
+                required
+              />
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="add_last_name" class="form-label">Apellido</label>
+              <input
+                type="text"
+                class="form-control"
+                id="add_last_name"
+                name="last_name"
+                required
+              />
+            </div>
+          </div>
+          <div class="mb-3">
+            <label for="add_email" class="form-label">Email</label>
+            <input
+              type="email"
+              class="form-control"
+              id="add_email"
+              name="email"
+              required
+            />
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="add_age" class="form-label">Edad</label>
+              <input
+                type="number"
+                class="form-control"
+                id="add_age"
+                name="age"
+                min="18"
+                max="120"
+                required
+              />
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="add_role" class="form-label">Rol</label>
+              <select class="form-select" id="add_role" name="role">
+                <option value="user">Usuario</option>
+                <option value="premium">Premium</option>
+                <option value="admin">Administrador</option>
+              </select>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label for="add_password" class="form-label">Contraseña</label>
+            <input
+              type="password"
+              class="form-control"
+              id="add_password"
+              name="password"
+              minlength="6"
+              required
+            />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            data-bs-dismiss="modal"
+          >Cancelar</button>
+          <button type="submit" class="btn btn-primary">
+            <span
+              class="spinner-border spinner-border-sm me-2 d-none"
+              id="addUserSpinner"
+            ></span>
+            Crear Usuario
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Edit User Modal -->
+<div class="modal fade" id="editUserModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-person-gear me-2"></i>
+          Editar Usuario
+        </h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+        ></button>
+      </div>
+      <form id="editUserForm">
+        <input type="hidden" id="edit_user_id" name="user_id" />
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="edit_first_name" class="form-label">Nombre</label>
+              <input
+                type="text"
+                class="form-control"
+                id="edit_first_name"
+                name="first_name"
+                required
+              />
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="edit_last_name" class="form-label">Apellido</label>
+              <input
+                type="text"
+                class="form-control"
+                id="edit_last_name"
+                name="last_name"
+                required
+              />
+            </div>
+          </div>
+          <div class="mb-3">
+            <label for="edit_email" class="form-label">Email</label>
+            <input
+              type="email"
+              class="form-control"
+              id="edit_email"
+              name="email"
+              required
+            />
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="edit_age" class="form-label">Edad</label>
+              <input
+                type="number"
+                class="form-control"
+                id="edit_age"
+                name="age"
+                min="18"
+                max="120"
+                required
+              />
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="edit_role" class="form-label">Rol</label>
+              <select class="form-select" id="edit_role" name="role">
+                <option value="user">Usuario</option>
+                <option value="premium">Premium</option>
+                <option value="admin">Administrador</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            data-bs-dismiss="modal"
+          >Cancelar</button>
+          <button type="submit" class="btn btn-primary">
+            <span
+              class="spinner-border spinner-border-sm me-2 d-none"
+              id="editUserSpinner"
+            ></span>
+            Actualizar Usuario
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteUserModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-danger">
+          <i class="bi bi-exclamation-triangle me-2"></i>
+          Confirmar Eliminación
+        </h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <p>¿Estás seguro de que deseas eliminar al usuario
+          <strong id="deleteUserName"></strong>?</p>
+        <p class="text-danger">
+          <i class="bi bi-exclamation-triangle me-1"></i>
+          Esta acción no se puede deshacer.
+        </p>
+        <input type="hidden" id="deleteUserId" />
+      </div>
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          data-bs-dismiss="modal"
+        >Cancelar</button>
+        <button
+          type="button"
+          class="btn btn-danger"
+          onclick="confirmDeleteUser()"
+        >
+          <span
+            class="spinner-border spinner-border-sm me-2 d-none"
+            id="deleteUserSpinner"
+          ></span>
+          Eliminar Usuario
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,95 @@
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6 col-lg-4">
+      <div class="card">
+        <div class="card-header bg-primary text-white text-center">
+          <h4 class="mb-0">
+            <i class="bi bi-box-arrow-in-right me-2"></i>
+            Iniciar Sesión
+          </h4>
+        </div>
+        <div class="card-body p-4">
+          <form id="loginForm">
+            <div class="mb-3">
+              <label for="email" class="form-label">
+                <i class="bi bi-envelope me-1"></i>
+                Correo Electrónico
+              </label>
+              <input
+                type="email"
+                class="form-control"
+                id="email"
+                name="email"
+                placeholder="usuario@ejemplo.com"
+                required
+              />
+              <div class="invalid-feedback"></div>
+            </div>
+
+            <div class="mb-3">
+              <label for="password" class="form-label">
+                <i class="bi bi-lock me-1"></i>
+                Contraseña
+              </label>
+              <div class="input-group">
+                <input
+                  type="password"
+                  class="form-control"
+                  id="password"
+                  name="password"
+                  placeholder="Tu contraseña"
+                  required
+                />
+                <button
+                  class="btn btn-outline-secondary"
+                  type="button"
+                  id="togglePassword"
+                  title="Mostrar/Ocultar contraseña"
+                >
+                  <i class="bi bi-eye"></i>
+                </button>
+              </div>
+              <div class="invalid-feedback"></div>
+            </div>
+
+            <div class="mb-3 form-check">
+              <input
+                type="checkbox"
+                class="form-check-input"
+                id="rememberMe"
+                name="rememberMe"
+              />
+              <label class="form-check-label" for="rememberMe">
+                Recordarme
+              </label>
+            </div>
+
+            <div class="d-grid mb-3">
+              <button type="submit" class="btn btn-primary" id="submitBtn">
+                <span
+                  class="spinner-border spinner-border-sm me-2 d-none"
+                  id="loginSpinner"
+                ></span>
+                <i class="bi bi-box-arrow-in-right me-1"></i>
+                Iniciar Sesión
+              </button>
+            </div>
+          </form>
+
+          <hr />
+
+          <div class="text-center">
+            <p class="mb-0">¿No tienes una cuenta?</p>
+            <a href="/register" class="btn btn-outline-primary btn-sm mt-1">
+              <i class="bi bi-person-plus me-1"></i>
+              Crear cuenta nueva
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Scripts específicos de la página -->
+<script src="/js/login.js"></script>

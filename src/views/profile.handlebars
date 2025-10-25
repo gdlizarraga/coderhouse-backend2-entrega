@@ -1,0 +1,254 @@
+{{#contentFor "pageScripts"}}
+<script src="/js/profile.js"></script>
+{{/contentFor}}
+
+<div class="container py-4">
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h2 class="mb-1">
+            <i class="bi bi-person-circle me-2"></i>
+            Mi Perfil
+          </h2>
+          <p class="text-muted mb-0">
+            Ve y edita tu información personal
+          </p>
+        </div>
+        <div>
+          <button
+            class="btn btn-primary"
+            id="editProfileBtn"
+          >
+            <i class="bi bi-pencil me-1"></i>
+            Editar Perfil
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile Information -->
+  <div class="row">
+    <div class="col-lg-8 mx-auto">
+      <div class="card">
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-4 text-center mb-4">
+              <!-- Avatar -->
+              <div class="mb-3">
+                <div class="avatar-circle mx-auto">
+                  <i class="bi bi-person-fill"></i>
+                </div>
+              </div>
+              <h5 class="mb-1">{{user.first_name}} {{user.last_name}}</h5>
+              <span class="badge bg-{{#if (eq user.role 'admin')}}danger{{else if (eq user.role 'premium')}}warning{{else}}primary{{/if}} mb-2">
+                {{user.role}}
+              </span>
+              <p class="text-muted small mb-0">
+                Miembro desde {{formatDate user.createdAt}}
+              </p>
+            </div>
+            
+            <div class="col-md-8">
+              <h6 class="text-muted mb-3">Información Personal</h6>
+              
+              <div class="row mb-3">
+                <div class="col-sm-4">
+                  <strong>Nombre:</strong>
+                </div>
+                <div class="col-sm-8">
+                  {{user.first_name}}
+                </div>
+              </div>
+              
+              <div class="row mb-3">
+                <div class="col-sm-4">
+                  <strong>Apellido:</strong>
+                </div>
+                <div class="col-sm-8">
+                  {{user.last_name}}
+                </div>
+              </div>
+              
+              <div class="row mb-3">
+                <div class="col-sm-4">
+                  <strong>Email:</strong>
+                </div>
+                <div class="col-sm-8">
+                  {{user.email}}
+                </div>
+              </div>
+              
+              <div class="row mb-3">
+                <div class="col-sm-4">
+                  <strong>Edad:</strong>
+                </div>
+                <div class="col-sm-8">
+                  {{user.age}} años
+                </div>
+              </div>
+              
+              <div class="row mb-3">
+                <div class="col-sm-4">
+                  <strong>Rol:</strong>
+                </div>
+                <div class="col-sm-8">
+                  <span class="badge bg-{{#if (eq user.role 'admin')}}danger{{else if (eq user.role 'premium')}}warning{{else}}primary{{/if}}">
+                    {{user.role}}
+                  </span>
+                </div>
+              </div>
+              
+              <div class="row mb-3">
+                <div class="col-sm-4">
+                  <strong>Último acceso:</strong>
+                </div>
+                <div class="col-sm-8">
+                  {{#if user.lastLogin}}
+                    {{formatDate user.lastLogin}}
+                  {{else}}
+                    Nunca
+                  {{/if}}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para editar perfil -->
+<div class="modal fade" id="editProfileModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-pencil me-2"></i>
+          Editar Perfil
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="editProfileForm">
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="editFirstName" class="form-label">Nombre *</label>
+              <input
+                type="text"
+                class="form-control"
+                id="editFirstName"
+                name="first_name"
+                value="{{user.first_name}}"
+                required
+              />
+              <div class="invalid-feedback"></div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="editLastName" class="form-label">Apellido *</label>
+              <input
+                type="text"
+                class="form-control"
+                id="editLastName"
+                name="last_name"
+                value="{{user.last_name}}"
+                required
+              />
+              <div class="invalid-feedback"></div>
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <label for="editAge" class="form-label">Edad *</label>
+            <input
+              type="number"
+              class="form-control"
+              id="editAge"
+              name="age"
+              value="{{user.age}}"
+              min="1"
+              max="120"
+              required
+            />
+            <div class="invalid-feedback"></div>
+          </div>
+          
+          <hr class="my-4">
+          
+          <h6 class="text-muted mb-3">Cambiar Contraseña (opcional)</h6>
+          
+          <div class="mb-3">
+            <label for="currentPassword" class="form-label">Contraseña Actual</label>
+            <input
+              type="password"
+              class="form-control"
+              id="currentPassword"
+              name="currentPassword"
+              placeholder="Deja en blanco si no quieres cambiar la contraseña"
+            />
+            <div class="invalid-feedback"></div>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="newPassword" class="form-label">Nueva Contraseña</label>
+              <input
+                type="password"
+                class="form-control"
+                id="newPassword"
+                name="newPassword"
+                placeholder="Nueva contraseña"
+              />
+              <div class="invalid-feedback"></div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="confirmPassword" class="form-label">Confirmar Contraseña</label>
+              <input
+                type="password"
+                class="form-control"
+                id="confirmPassword"
+                name="confirmPassword"
+                placeholder="Confirmar nueva contraseña"
+              />
+              <div class="invalid-feedback"></div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            Cancelar
+          </button>
+          <button type="submit" class="btn btn-primary" id="saveProfileBtn">
+            <span class="spinner-border spinner-border-sm me-2 d-none" id="saveProfileSpinner"></span>
+            Guardar Cambios
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<style>
+.avatar-circle {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  color: white;
+  margin-bottom: 1rem;
+}
+
+.card {
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  border: 1px solid rgba(0, 0, 0, 0.125);
+}
+</style>

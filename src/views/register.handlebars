@@ -1,0 +1,247 @@
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+      <div class="card">
+        <div class="card-header bg-success text-white text-center">
+          <h4 class="mb-0">
+            <i class="bi bi-person-plus me-2"></i>
+            Crear Nueva Cuenta
+          </h4>
+        </div>
+        <div class="card-body p-4">
+          <form id="registerForm">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="first_name" class="form-label">
+                  <i class="bi bi-person me-1"></i>
+                  Nombre
+                </label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="first_name"
+                  name="first_name"
+                  placeholder="Tu nombre"
+                  required
+                  minlength="2"
+                  maxlength="50"
+                />
+                <div class="invalid-feedback"></div>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label for="last_name" class="form-label">
+                  <i class="bi bi-person me-1"></i>
+                  Apellido
+                </label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="last_name"
+                  name="last_name"
+                  placeholder="Tu apellido"
+                  required
+                  minlength="2"
+                  maxlength="50"
+                />
+                <div class="invalid-feedback"></div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="email" class="form-label">
+                <i class="bi bi-envelope me-1"></i>
+                Correo Electrónico
+              </label>
+              <input
+                type="email"
+                class="form-control"
+                id="email"
+                name="email"
+                placeholder="usuario@ejemplo.com"
+                required
+              />
+              <div class="invalid-feedback"></div>
+              <div class="form-text">
+                <i class="bi bi-info-circle me-1"></i>
+                Usaremos este email para el inicio de sesión
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="age" class="form-label">
+                <i class="bi bi-calendar me-1"></i>
+                Edad
+              </label>
+              <input
+                type="number"
+                class="form-control"
+                id="age"
+                name="age"
+                placeholder="Tu edad"
+                required
+                min="18"
+                max="120"
+              />
+              <div class="invalid-feedback"></div>
+              <div class="form-text">
+                <i class="bi bi-info-circle me-1"></i>
+                Debes ser mayor de 18 años para registrarte
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="password" class="form-label">
+                <i class="bi bi-lock me-1"></i>
+                Contraseña
+              </label>
+              <div class="input-group">
+                <input
+                  type="password"
+                  class="form-control"
+                  id="password"
+                  name="password"
+                  placeholder="Tu contraseña"
+                  required
+                  minlength="6"
+                />
+                <button
+                  class="btn btn-outline-secondary"
+                  type="button"
+                  id="togglePassword"
+                  title="Mostrar/Ocultar contraseña"
+                >
+                  <i class="bi bi-eye"></i>
+                </button>
+              </div>
+              <div class="invalid-feedback"></div>
+              <div class="form-text">
+                <i class="bi bi-info-circle me-1"></i>
+                Mínimo 6 caracteres, recomendamos incluir números y letras
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="confirmPassword" class="form-label">
+                <i class="bi bi-lock-fill me-1"></i>
+                Confirmar Contraseña
+              </label>
+              <div class="input-group">
+                <input
+                  type="password"
+                  class="form-control"
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  placeholder="Confirma tu contraseña"
+                  required
+                />
+                <button
+                  class="btn btn-outline-secondary"
+                  type="button"
+                  id="toggleConfirmPassword"
+                  title="Mostrar/Ocultar contraseña"
+                >
+                  <i class="bi bi-eye"></i>
+                </button>
+              </div>
+              <div class="invalid-feedback"></div>
+            </div>
+
+            <div class="mb-3 form-check">
+              <input
+                type="checkbox"
+                class="form-check-input"
+                id="terms"
+                name="terms"
+                required
+              />
+              <label class="form-check-label" for="terms">
+                Acepto los
+                <a
+                  href="#"
+                  data-bs-toggle="modal"
+                  data-bs-target="#termsModal"
+                >términos y condiciones</a>
+              </label>
+              <div class="invalid-feedback"></div>
+            </div>
+
+            <div class="d-grid mb-3">
+              <button type="submit" class="btn btn-success" id="submitBtn">
+                <span
+                  class="spinner-border spinner-border-sm me-2 d-none"
+                  id="registerSpinner"
+                ></span>
+                <i class="bi bi-person-plus me-1"></i>
+                Crear Cuenta
+              </button>
+            </div>
+          </form>
+
+          <hr />
+
+          <div class="text-center">
+            <p class="mb-0">¿Ya tienes una cuenta?</p>
+            <a href="/login" class="btn btn-outline-primary btn-sm mt-1">
+              <i class="bi bi-box-arrow-in-right me-1"></i>
+              Iniciar sesión
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Términos y Condiciones -->
+<div class="modal fade" id="termsModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-file-text me-2"></i>
+          Términos y Condiciones
+        </h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <h6>1. Aceptación de Términos</h6>
+        <p>Al registrarte en nuestro sistema, aceptas cumplir con estos términos
+          y condiciones.</p>
+
+        <h6>2. Uso del Servicio</h6>
+        <p>Este sistema está diseñado para gestión de usuarios con fines
+          educativos y de desarrollo.</p>
+
+        <h6>3. Privacidad</h6>
+        <p>Nos comprometemos a proteger tu información personal de acuerdo con
+          las mejores prácticas de seguridad.</p>
+
+        <h6>4. Responsabilidades del Usuario</h6>
+        <ul>
+          <li>Mantener la confidencialidad de tu contraseña</li>
+          <li>Proporcionar información veraz y actualizada</li>
+          <li>No utilizar el sistema para actividades ilegales</li>
+        </ul>
+
+        <h6>5. Modificaciones</h6>
+        <p>Nos reservamos el derecho de modificar estos términos en cualquier
+          momento.</p>
+      </div>
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          data-bs-dismiss="modal"
+        >Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Scripts específicos de la página -->
+<script src="/js/register.js"></script>

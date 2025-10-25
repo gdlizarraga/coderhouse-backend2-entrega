@@ -1,0 +1,165 @@
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6 text-center">
+      <div class="mb-4">
+        <i
+          class="bi bi-exclamation-triangle text-warning"
+          style="font-size: 5rem;"
+        ></i>
+      </div>
+
+      <h1 class="display-4 fw-bold mb-3">
+        {{#if error.status}}
+          Error
+          {{error.status}}
+        {{else}}
+          ¡Oops!
+        {{/if}}
+      </h1>
+
+      <h2 class="h4 mb-4 text-muted">
+        {{#if error.message}}
+          {{error.message}}
+        {{else}}
+          Ha ocurrido un error inesperado
+        {{/if}}
+      </h2>
+
+      {{#if (eq error.status 404)}}
+        <p class="lead mb-4">
+          La página que buscas no existe o ha sido movida.
+        </p>
+      {{else if (eq error.status 403)}}
+        <p class="lead mb-4">
+          No tienes permisos suficientes para acceder a este recurso.
+        </p>
+      {{else if (eq error.status 500)}}
+        <p class="lead mb-4">
+          Estamos experimentando problemas técnicos temporales.
+        </p>
+      {{else}}
+        <p class="lead mb-4">
+          Algo no salió como esperábamos. Nuestro equipo ha sido notificado.
+        </p>
+      {{/if}}
+
+      <div class="d-flex gap-3 justify-content-center flex-wrap">
+        <a href="/" class="btn btn-primary">
+          <i class="bi bi-house me-1"></i>
+          Ir al Inicio
+        </a>
+
+        <button class="btn btn-outline-secondary" onclick="history.back()">
+          <i class="bi bi-arrow-left me-1"></i>
+          Volver Atrás
+        </button>
+
+        {{#if user}}
+          {{#if (eq user.role "admin")}}
+            <a href="/users" class="btn btn-outline-primary">
+              <i class="bi bi-people me-1"></i>
+              Gestionar Usuarios
+            </a>
+          {{/if}}
+        {{else}}
+          <a href="/login" class="btn btn-outline-success">
+            <i class="bi bi-box-arrow-in-right me-1"></i>
+            Iniciar Sesión
+          </a>
+        {{/if}}
+      </div>
+
+      {{#if error.details}}
+        <div class="mt-5">
+          <details class="text-start">
+            <summary class="btn btn-outline-info btn-sm">
+              <i class="bi bi-info-circle me-1"></i>
+              Detalles del Error
+            </summary>
+            <div class="mt-3 p-3 bg-light rounded">
+              <pre class="mb-0"><code>{{error.details}}</code></pre>
+            </div>
+          </details>
+        </div>
+      {{/if}}
+    </div>
+  </div>
+
+  <!-- Información adicional para desarrolladores -->
+  {{#if isDevelopment}}
+    <div class="row justify-content-center mt-5">
+      <div class="col-md-10">
+        <div class="card">
+          <div class="card-header bg-info text-white">
+            <h5 class="mb-0">
+              <i class="bi bi-tools me-1"></i>
+              Información de Desarrollo
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6">
+                <h6>Rutas Disponibles:</h6>
+                <ul class="list-unstyled">
+                  <li><code>GET /</code> - Página de inicio</li>
+                  <li><code>GET /login</code> - Iniciar sesión</li>
+                  <li><code>GET /register</code> - Registrarse</li>
+                  <li><code>GET /users</code> - Gestión de usuarios (Admin)</li>
+                  <li><code>GET /profile</code> - Perfil de usuario</li>
+                  <li><code>GET /settings</code> - Configuración</li>
+                </ul>
+              </div>
+              <div class="col-md-6">
+                <h6>API Endpoints:</h6>
+                <ul class="list-unstyled">
+                  <li><code>POST /api/users/register</code></li>
+                  <li><code>POST /api/sessions/login</code></li>
+                  <li><code>GET /api/sessions/current</code></li>
+                  <li><code>GET /api/users</code> (Admin)</li>
+                  <li><code>GET /api/health</code></li>
+                  <li><code>GET /docs</code> - Documentación</li>
+                </ul>
+              </div>
+            </div>
+
+            {{#if error.stack}}
+              <hr />
+              <h6>Stack Trace:</h6>
+              <pre
+                class="bg-dark text-light p-3 rounded"
+                style="font-size: 0.8rem; max-height: 300px; overflow-y: auto;"
+              ><code>{{error.stack}}</code></pre>
+            {{/if}}
+          </div>
+        </div>
+      </div>
+    </div>
+  {{/if}}
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() { // Auto-refresh
+  para errores de servidor (500)
+  {{#if (eq error.status 500)}}
+    let retryCount = 0; const maxRetries = 3; function attemptRetry() { if
+    (retryCount < maxRetries) { retryCount++; showAlert(`Reintentando
+    conexión... (${retryCount}/${maxRetries})`, 'info', 3000); setTimeout(() =>
+    { fetch(window.location.href) .then(response => { if (response.ok) {
+    window.location.reload(); } else if (retryCount < maxRetries) {
+    attemptRetry(); } else { showAlert('No se pudo restablecer la conexión. Por
+    favor, recarga la página manualmente.', 'warning', 0); } }) .catch(() => {
+    if (retryCount < maxRetries) { attemptRetry(); } }); }, 5000); } } //
+    Iniciar retry después de 10 segundos setTimeout(attemptRetry, 10000);
+  {{/if}}
+
+  // Reportar error automáticamente (solo en producción)
+  {{#unless isDevelopment}}
+    {{#if error.status}}
+      // Aquí podrías enviar el error a un servicio de logging
+      console.error('Error reportado:', { status:
+      {{error.status}}, message: '{{error.message}}', url: window.location.href,
+      userAgent: navigator.userAgent, timestamp: new Date().toISOString() });
+    {{/if}}
+  {{/unless}}
+  });
+</script>

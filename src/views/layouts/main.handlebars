@@ -1,0 +1,243 @@
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{#if title}}{{title}} - {{/if}}Sistema de Usuarios</title>
+
+    <!-- Favicon -->
+    <link
+      rel="apple-touch-icon"
+      sizes="57x57"
+      href="/favicon/apple-icon-57x57.png"
+    />
+    <link
+      rel="apple-touch-icon"
+      sizes="60x60"
+      href="/favicon/apple-icon-60x60.png"
+    />
+    <link
+      rel="apple-touch-icon"
+      sizes="72x72"
+      href="/favicon/apple-icon-72x72.png"
+    />
+    <link
+      rel="apple-touch-icon"
+      sizes="76x76"
+      href="/favicon/apple-icon-76x76.png"
+    />
+    <link
+      rel="apple-touch-icon"
+      sizes="114x114"
+      href="/favicon/apple-icon-114x114.png"
+    />
+    <link
+      rel="apple-touch-icon"
+      sizes="120x120"
+      href="/favicon/apple-icon-120x120.png"
+    />
+    <link
+      rel="apple-touch-icon"
+      sizes="144x144"
+      href="/favicon/apple-icon-144x144.png"
+    />
+    <link
+      rel="apple-touch-icon"
+      sizes="152x152"
+      href="/favicon/apple-icon-152x152.png"
+    />
+    <link
+      rel="apple-touch-icon"
+      sizes="180x180"
+      href="/favicon/apple-icon-180x180.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="192x192"
+      href="/favicon/android-icon-192x192.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href="/favicon/favicon-32x32.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="96x96"
+      href="/favicon/favicon-96x96.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="16x16"
+      href="/favicon/favicon-16x16.png"
+    />
+    <link rel="manifest" href="/favicon/manifest.json" />
+    <meta name="msapplication-TileColor" href="#ffffff" />
+    <meta name="msapplication-TileImage" href="/favicon/ms-icon-144x144.png" />
+    <meta name="theme-color" content="#ffffff" />
+
+    {{#if user}}
+      <meta name="user-email" content="{{user.email}}" />
+    {{/if}}
+    <link rel="shortcut icon" href="/favicon/favicon.ico" type="image/x-icon" />
+    <link rel="icon" href="/favicon/favicon.ico" type="image/x-icon" />
+
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+
+    <!-- Bootstrap Icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css"
+    />
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/custom.css" />
+
+    <style>
+      body { background-color: #f8f9fa; } .navbar-brand { font-weight: bold; }
+      .card { box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075); border: 1px
+      solid rgba(0, 0, 0, 0.125); } .btn-primary { background-color: #0d6efd;
+      border-color: #0d6efd; } .btn-primary:hover { background-color: #0b5ed7;
+      border-color: #0a58ca; } .alert { border: none; border-radius: 0.5rem; }
+      .footer { background-color: #343a40; color: white; margin-top: auto; }
+      html, body { height: 100%; } #root { display: flex; flex-direction:
+      column; min-height: 100vh; } main { flex: 1; }
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <!-- Navbar -->
+      <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+          <a class="navbar-brand" href="/">
+            <i class="bi bi-person-circle me-2"></i>
+            Sistema de Usuarios
+          </a>
+
+          <button
+            class="navbar-toggler"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#navbarNav"
+          >
+            <span class="navbar-toggler-icon"></span>
+          </button>
+
+          <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+              {{#if user}}
+                <li class="nav-item">
+                  <a class="nav-link" href="/">
+                    <i class="bi bi-house-door me-1"></i>
+                    Inicio
+                  </a>
+                </li>
+                {{#if (eq user.role "admin")}}
+                  <li class="nav-item">
+                    <a class="nav-link" href="/users">
+                      <i class="bi bi-people me-1"></i>
+                      Gestionar Usuarios
+                    </a>
+                  </li>
+                {{/if}}
+              {{/if}}
+            </ul>
+
+            <ul class="navbar-nav">
+              {{#if user}}
+                <li class="nav-item dropdown">
+                  <a
+                    class="nav-link dropdown-toggle"
+                    href="#"
+                    role="button"
+                    data-bs-toggle="dropdown"
+                  >
+                    <i class="bi bi-person-circle me-1"></i>
+                    {{user.first_name}}
+                    {{user.last_name}}
+                    <span class="badge bg-secondary ms-1">{{user.role}}</span>
+                  </a>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="/profile">
+                        <i class="bi bi-person me-2"></i>Mi Perfil
+                      </a></li>
+                    <li><a class="dropdown-item" href="/settings">
+                        <i class="bi bi-gear me-2"></i>Configuración
+                      </a></li>
+                    <li><hr class="dropdown-divider" /></li>
+                    <li><a class="dropdown-item" href="#" onclick="logout()">
+                        <i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión
+                      </a></li>
+                  </ul>
+                </li>
+              {{else}}
+                <li class="nav-item">
+                  <a class="nav-link" href="/login">
+                    <i class="bi bi-box-arrow-in-right me-1"></i>
+                    Iniciar Sesión
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="/register">
+                    <i class="bi bi-person-plus me-1"></i>
+                    Registrarse
+                  </a>
+                </li>
+              {{/if}}
+            </ul>
+          </div>
+        </div>
+      </nav>
+
+      <!-- Main Content -->
+      <main>
+        <!-- Alerts Container -->
+        <div id="alertsContainer"></div>
+
+        {{{body}}}
+      </main>
+
+      <!-- Footer -->
+      <footer class="footer mt-5 py-3">
+        <div class="container">
+          <div class="row">
+            <div class="col-md-6">
+              <p class="mb-0">&copy; 2025 Sistema de Usuarios - Coderhouse
+                Backend II - Primer Entrega</p>
+            </div>
+            <div class="col-md-6 text-end">
+              <small class="text-muted">
+                Desarrollado con Node.js, Express y MongoDB
+              </small>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+    ></script>
+
+    <!-- Custom JS -->
+    <script src="/js/main.js"></script>
+
+    <!-- Page specific scripts from contentFor -->
+    {{{section "pageScripts"}}}
+
+    <!-- Page specific scripts -->
+    {{#if scripts}}
+      {{#each scripts}}
+        <script src="{{this}}"></script>
+      {{/each}}
+    {{/if}}
+  </body>
+</html>

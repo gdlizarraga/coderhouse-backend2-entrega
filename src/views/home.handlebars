@@ -1,0 +1,228 @@
+<div class="container py-5">
+    {{#if user}}
+        <!-- Dashboard para usuarios autenticados -->
+        <div class="row">
+            <div class="col-12">
+                <div class="jumbotron bg-primary text-white p-5 rounded mb-4">
+                    <h1 class="display-4">
+                        ¡Bienvenido, {{user.first_name}}!
+                    </h1>
+                    <p class="lead">
+                        Has iniciado sesión exitosamente en el Sistema de Gestión de Usuarios
+                    </p>
+                    <hr class="my-4" style="border-color: rgba(255,255,255,0.3);">
+                    <p>
+                        <i class="bi bi-shield-check me-2"></i>
+                        Tu rol actual es: <strong>{{user.role}}</strong>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cards informativas -->
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <i class="bi bi-person-circle text-primary" style="font-size: 3rem;"></i>
+                        </div>
+                        <h5 class="card-title">Mi Perfil</h5>
+                        <p class="card-text text-muted">
+                            Ve y edita tu información personal
+                        </p>
+                        <a href="/profile" class="btn btn-outline-primary">
+                            <i class="bi bi-person me-1"></i>
+                            Ver Perfil
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            {{#if (eq user.role 'admin')}}
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <i class="bi bi-people text-success" style="font-size: 3rem;"></i>
+                        </div>
+                        <h5 class="card-title">Gestionar Usuarios</h5>
+                        <p class="card-text text-muted">
+                            Administra todos los usuarios del sistema
+                        </p>
+                        <a href="/users" class="btn btn-success">
+                            <i class="bi bi-people me-1"></i>
+                            Ir a Usuarios
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {{/if}}
+
+            <div class="col-md-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            <i class="bi bi-gear text-warning" style="font-size: 3rem;"></i>
+                        </div>
+                        <h5 class="card-title">Configuración</h5>
+                        <p class="card-text text-muted">
+                            Cambia tu contraseña y ajustes
+                        </p>
+                        <a href="/settings" class="btn btn-outline-warning">
+                            <i class="bi bi-gear me-1"></i>
+                            Configuración
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Información del usuario -->
+        <div class="row mt-5">
+            <div class="col-md-8 mx-auto">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Información de tu Cuenta
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-sm-4"><strong>Nombre completo:</strong></div>
+                            <div class="col-sm-8">{{user.first_name}} {{user.last_name}}</div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-sm-4"><strong>Email:</strong></div>
+                            <div class="col-sm-8">{{user.email}}</div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-sm-4"><strong>Edad:</strong></div>
+                            <div class="col-sm-8">{{user.age}} años</div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-sm-4"><strong>Rol:</strong></div>
+                            <div class="col-sm-8">
+                                <span class="badge bg-{{#if (eq user.role 'admin')}}danger{{else if (eq user.role 'premium')}}warning{{else}}primary{{/if}}">
+                                    {{user.role}}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {{else}}
+        <!-- Landing page para usuarios no autenticados -->
+        <div class="row">
+            <div class="col-12">
+                <div class="jumbotron text-center p-5 mb-5" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #667eea 100%); color: white; border-radius: 15px; box-shadow: 0 8px 32px rgba(0,0,0,0.1);">
+                    <h1 class="display-3 fw-bold mb-4" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.3); color: #ffffff;">
+                        <i class="bi bi-shield-check me-3"></i>
+                        Sistema de Usuarios
+                    </h1>
+                    <p class="lead fs-4 mb-4" style="text-shadow: 1px 1px 3px rgba(0,0,0,0.2); color: #f8f9fa; font-weight: 500;">
+                        Plataforma segura de gestión y autenticación de usuarios
+                    </p>
+                    <p class="fs-5 mb-5" style="text-shadow: 1px 1px 3px rgba(0,0,0,0.2); color: #e9ecef; font-weight: 400;">
+                        Desarrollado con Node.js, Express, MongoDB y JWT
+                    </p>
+                    <div class="d-flex gap-3 justify-content-center flex-wrap">
+                        <a href="/login" class="btn btn-light btn-lg px-4 shadow" style="background-color: #ffffff; color: #1e3c72; border: 2px solid #ffffff; font-weight: 600;">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>
+                            Iniciar Sesión
+                        </a>
+                        <a href="/register" class="btn btn-lg px-4 shadow" style="background-color: transparent; color: #ffffff; border: 2px solid #ffffff; font-weight: 600;">
+                            <i class="bi bi-person-plus me-2"></i>
+                            Crear Cuenta
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features -->
+        <div class="row g-4 mb-5">
+            <div class="col-md-4">
+                <div class="card h-100 text-center">
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <i class="bi bi-shield-lock text-primary" style="font-size: 3rem;"></i>
+                        </div>
+                        <h5 class="card-title">Seguridad Avanzada</h5>
+                        <p class="card-text">
+                            Autenticación JWT y encriptación bcrypt para máxima seguridad
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card h-100 text-center">
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <i class="bi bi-people text-success" style="font-size: 3rem;"></i>
+                        </div>
+                        <h5 class="card-title">Gestión de Roles</h5>
+                        <p class="card-text">
+                            Sistema completo de roles y permisos para diferentes tipos de usuarios
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card h-100 text-center">
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <i class="bi bi-gear text-warning" style="font-size: 3rem;"></i>
+                        </div>
+                        <h5 class="card-title">CRUD Completo</h5>
+                        <p class="card-text">
+                            Operaciones completas de creación, lectura, actualización y eliminación
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- API Info -->
+        <div class="row">
+            <div class="col-md-8 mx-auto">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-api me-2"></i>
+                            API Endpoints Disponibles
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>🔓 Endpoints Públicos</h6>
+                                <ul class="list-unstyled">
+                                    <li><code>POST /api/users/register</code></li>
+                                    <li><code>POST /api/sessions/login</code></li>
+                                    <li><code>GET /api/health</code></li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>🔒 Endpoints Privados</h6>
+                                <ul class="list-unstyled">
+                                    <li><code>GET /api/sessions/current</code></li>
+                                    <li><code>GET /api/users/profile/me</code></li>
+                                    <li><code>PUT /api/users/profile/me</code></li>
+                                    <li><code>GET /api/users</code> (Admin)</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {{/if}}
+</div>
