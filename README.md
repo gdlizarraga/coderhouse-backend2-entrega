@@ -399,7 +399,7 @@ npm run dev
 npm start
 ```
 
-El servidor estará disponible en: **http://localhost:3000**
+El servidor estará disponible en: **http://localhost:8080**
 
 ## 🌐 Páginas Web Disponibles
 
@@ -566,7 +566,7 @@ Para probar la aplicación web, puedes usar estas credenciales:
 
 ### Acceso Rápido:
 
-1. Ve a `http://localhost:3000/login`
+1. Ve a `http://localhost:8080/login`
 2. Usa las credenciales de admin para acceder al panel de usuarios
 3. Usa las credenciales de usuario regular para ver la experiencia normal
 
@@ -1779,7 +1779,7 @@ echo %JWT_SECRET% # Windows
 
 ```bash
 # Cambiar puerto en .env si 8080 está ocupado
-PORT=3000
+PORT=8080
 ```
 
 ### Error E11000 Duplicate Key en Cart
