@@ -1,0 +1,92 @@
+<div class="container mt-4">
+  <div class="mb-4">
+    <a href="/tickets" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left me-2"></i>
+      Volver a Mis Compras
+    </a>
+  </div>
+
+  <!-- Loading state -->
+  <div id="ticketLoading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Cargando...</span>
+    </div>
+    <p class="mt-2">Cargando detalles...</p>
+  </div>
+
+  <!-- Ticket detail -->
+  <div id="ticketDetail" class="d-none">
+    <div class="row">
+      <!-- Ticket info card -->
+      <div class="col-md-4 mb-4">
+        <div class="card">
+          <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+              <i class="bi bi-receipt me-2"></i>
+              Información de Compra
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="mb-3">
+              <label class="text-muted small">Código de Ticket</label>
+              <p class="mb-0 fw-bold" id="ticketCode">-</p>
+            </div>
+            <div class="mb-3">
+              <label class="text-muted small">Fecha de Compra</label>
+              <p class="mb-0" id="ticketDate">-</p>
+            </div>
+            <div class="mb-3">
+              <label class="text-muted small">Comprador</label>
+              <p class="mb-0" id="ticketPurchaser">-</p>
+            </div>
+            <hr />
+            <div>
+              <label class="text-muted small">Total Pagado</label>
+              <h3 class="mb-0 text-success" id="ticketAmount">$0.00</h3>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Products list -->
+      <div class="col-md-8 mb-4">
+        <div class="card">
+          <div class="card-header bg-success text-white">
+            <h5 class="mb-0">
+              <i class="bi bi-bag-check me-2"></i>
+              Productos Comprados
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>Producto</th>
+                    <th class="text-center">Cantidad</th>
+                    <th class="text-end">Precio Unit.</th>
+                    <th class="text-end">Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody id="ticketProducts"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error state -->
+  <div id="ticketError" class="alert alert-danger d-none" role="alert">
+    <i class="bi bi-exclamation-triangle me-2"></i>
+    <span id="ticketErrorMessage">Error al cargar el ticket</span>
+  </div>
+</div>
+
+{{#contentFor "pageScripts"}}
+  <script>
+    const ticketId = "{{ticketId}}";
+  </script>
+  <script src="/js/ticket-detail.js"></script>
+{{/contentFor}}

@@ -36,14 +36,9 @@ const userSchema = new mongoose.Schema({
     required: [true, "La contraseña es obligatoria"],
     minlength: [6, "La contraseña debe tener al menos 6 caracteres"],
   },
-  cart: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Cart",
-    default: null,
-  },
   role: {
     type: String,
-    enum: ["user", "admin", "premium"],
+    enum: ["user", "admin"],
     default: "user",
   },
   createdAt: {
@@ -55,6 +50,26 @@ const userSchema = new mongoose.Schema({
     default: Date.now,
   },
   lastLogin: {
+    type: Date,
+    default: null,
+  },
+  isActive: {
+    type: Boolean,
+    default: false,
+  },
+  activationToken: {
+    type: String,
+    default: null,
+  },
+  activationTokenExpires: {
+    type: Date,
+    default: null,
+  },
+  resetPasswordToken: {
+    type: String,
+    default: null,
+  },
+  resetPasswordExpires: {
     type: Date,
     default: null,
   },

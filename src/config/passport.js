@@ -1,12 +1,27 @@
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import { Strategy as JwtStrategy, ExtractJwt } from "passport-jwt";
-import User from "../models/User.js";
-import Cart from "../models/Cart.js";
+import UserRepository from "../repositories/UserRepository.js";
 import { comparePassword } from "../utils/auth.js";
 import dotenv from "dotenv";
 
 dotenv.config();
+
+// Extractor personalizado para JWT desde cookies o header
+const cookieExtractor = (req) => {
+  let token = null;
+  if (req && req.cookies) {
+    token = req.cookies["authToken"];
+  }
+  // Si no está en cookie, buscar en header Authorization
+  if (!token && req.headers.authorization) {
+    const parts = req.headers.authorization.split(" ");
+    if (parts.length === 2 && parts[0] === "Bearer") {
+      token = parts[1];
+    }
+  }
+  return token;
+};
 
 // Configurar estrategia Local para login
 passport.use(
@@ -18,8 +33,8 @@ passport.use(
     },
     async (email, password, done) => {
       try {
-        // Buscar usuario por email
-        const user = await User.findByEmail(email).populate("cart");
+        // Buscar usuario por email con password
+        const user = await UserRepository.getByEmailWithPassword(email);
 
         if (!user) {
           return done(null, false, {
@@ -36,11 +51,17 @@ passport.use(
           });
         }
 
-        // Actualizar último login
+        // Actualizar último login (acceso directo al modelo necesario aquí)
         user.lastLogin = new Date();
         await user.save();
 
-        return done(null, user);
+        // Retornar el usuario como objeto plano con 'id' en lugar de '_id'
+        const userObj = user.toObject();
+        userObj.id = userObj._id.toString();
+        delete userObj._id;
+        delete userObj.password;
+
+        return done(null, userObj);
       } catch (error) {
         return done(error, false);
       }
@@ -53,20 +74,26 @@ passport.use(
   "jwt",
   new JwtStrategy(
     {
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: cookieExtractor,
       secretOrKey:
         process.env.JWT_SECRET || "default_secret_change_in_production",
     },
     async (payload, done) => {
       try {
-        // Buscar usuario por ID del payload
-        const user = await User.findById(payload.id).populate("cart");
+        // Buscar usuario por ID del payload con password para el modelo
+        const user = await UserRepository.getByEmailWithPassword(payload.email);
 
         if (!user) {
           return done(null, false, { message: "Usuario no encontrado" });
         }
 
-        return done(null, user);
+        // Retornar el usuario como objeto plano con 'id' en lugar de '_id'
+        const userObj = user.toObject();
+        userObj.id = userObj._id.toString();
+        delete userObj._id;
+        delete userObj.password;
+
+        return done(null, userObj);
       } catch (error) {
         return done(error, false);
       }
@@ -79,26 +106,24 @@ passport.use(
   "current",
   new JwtStrategy(
     {
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: cookieExtractor,
       secretOrKey:
         process.env.JWT_SECRET || "default_secret_change_in_production",
     },
     async (payload, done) => {
       try {
-        // Buscar usuario por ID del payload con información completa
-        const user = await User.findById(payload.id)
-          .populate("cart")
-          .select("-password"); // Excluir contraseña
+        // Buscar usuario por ID del payload
+        const userDTO = await UserRepository.getById(payload.id);
 
-        if (!user) {
+        if (!userDTO) {
           return done(null, false, {
             message: "Token inválido - Usuario no encontrado",
             code: "USER_NOT_FOUND",
           });
         }
 
-        // Verificar que el usuario esté activo (se puede agregar campo isActive si es necesario)
-        return done(null, user);
+        // Retornar el DTO como objeto plano con 'id'
+        return done(null, userDTO.toJSON());
       } catch (error) {
         return done(error, false, {
           message: "Error al validar token",
@@ -111,14 +136,14 @@ passport.use(
 
 // Serialización del usuario para las sesiones (si se usan)
 passport.serializeUser((user, done) => {
-  done(null, user._id);
+  done(null, user.id || user._id?.toString());
 });
 
 // Deserialización del usuario para las sesiones (si se usan)
 passport.deserializeUser(async (id, done) => {
   try {
-    const user = await User.findById(id).populate("cart");
-    done(null, user);
+    const userDTO = await UserRepository.getById(id);
+    done(null, userDTO ? userDTO.toJSON() : null);
   } catch (error) {
     done(error, null);
   }

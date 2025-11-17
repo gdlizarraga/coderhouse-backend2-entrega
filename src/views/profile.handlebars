@@ -43,7 +43,7 @@
                 </div>
               </div>
               <h5 class="mb-1">{{user.first_name}} {{user.last_name}}</h5>
-              <span class="badge bg-{{#if (eq user.role 'admin')}}danger{{else if (eq user.role 'premium')}}warning{{else}}primary{{/if}} mb-2">
+              <span class="badge bg-{{#if (eq user.role 'admin')}}danger{{else}}primary{{/if}} mb-2">
                 {{user.role}}
               </span>
               <p class="text-muted small mb-0">
@@ -95,7 +95,7 @@
                   <strong>Rol:</strong>
                 </div>
                 <div class="col-sm-8">
-                  <span class="badge bg-{{#if (eq user.role 'admin')}}danger{{else if (eq user.role 'premium')}}warning{{else}}primary{{/if}}">
+                  <span class="badge bg-{{#if (eq user.role 'admin')}}danger{{else}}primary{{/if}}">
                     {{user.role}}
                   </span>
                 </div>

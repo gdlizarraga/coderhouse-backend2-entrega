@@ -1,0 +1,125 @@
+﻿{{#contentFor "pageStyles"}}
+<style>
+  .activation-container {
+    min-height: calc(100vh - 200px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+  }
+  .activation-card {
+    max-width: 500px;
+    width: 100%;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    padding: 40px;
+    text-align: center;
+  }
+  .activation-icon {
+    font-size: 80px;
+    margin-bottom: 20px;
+  }
+  .activation-icon.success { color: #28a745; }
+  .activation-icon.error { color: #dc3545; }
+  .activation-icon.loading {
+    color: #667eea;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+  .activation-title {
+    font-size: 28px;
+    font-weight: bold;
+    margin-bottom: 15px;
+  }
+  .activation-message {
+    font-size: 16px;
+    color: #666;
+    margin-bottom: 30px;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    padding: 12px 40px;
+    border-radius: 50px;
+    font-weight: bold;
+  }
+  .btn-primary:hover {
+    transform: scale(1.05);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+  }
+</style>
+{{/contentFor}}
+
+<div class="activation-container">
+  <div class="activation-card">
+    <div id="loading-state">
+      <div class="activation-icon loading">⏳</div>
+      <h2 class="activation-title">Activando tu cuenta...</h2>
+      <p class="activation-message">Por favor espera un momento.</p>
+    </div>
+
+    <div id="success-state" style="display: none;">
+      <div class="activation-icon success">✓</div>
+      <h2 class="activation-title">¡Cuenta Activada!</h2>
+      <p class="activation-message">Tu cuenta ha sido activada exitosamente. Ya puedes iniciar sesión.</p>
+      <a href="/login" class="btn btn-primary">Iniciar Sesión</a>
+    </div>
+
+    <div id="error-state" style="display: none;">
+      <div class="activation-icon error">✗</div>
+      <h2 class="activation-title">Error de Activación</h2>
+      <p class="activation-message" id="error-message">El enlace de activación es inválido o ha expirado.</p>
+      <a href="/register" class="btn btn-primary">Registrarse Nuevamente</a>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  document.addEventListener('DOMContentLoaded', async function() {
+    var urlParams = new URLSearchParams(window.location.search);
+    var token = urlParams.get('token');
+
+    if (!token) {
+      showError('Token de activación no proporcionado');
+      return;
+    }
+
+    try {
+      var response = await fetch('/api/sessions/activate-account', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: token })
+      });
+
+      var data = await response.json();
+      
+      if (response.ok && data.success) {
+        showSuccess();
+      } else {
+        showError(data.message || 'Error al activar la cuenta');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      showError('Error de conexión. Por favor intenta nuevamente.');
+    }
+  });
+
+  function showSuccess() {
+    document.getElementById('loading-state').style.display = 'none';
+    document.getElementById('error-state').style.display = 'none';
+    document.getElementById('success-state').style.display = 'block';
+  }
+
+  function showError(message) {
+    document.getElementById('loading-state').style.display = 'none';
+    document.getElementById('success-state').style.display = 'none';
+    document.getElementById('error-message').textContent = message;
+    document.getElementById('error-state').style.display = 'block';
+  }
+})();
+</script>

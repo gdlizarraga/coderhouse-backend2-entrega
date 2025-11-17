@@ -1,5 +1,6 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -88,9 +89,37 @@ export const extractTokenFromHeader = (authHeader) => {
  */
 export const createJWTPayload = (user) => {
   return {
-    id: user._id,
+    id: user.id || user._id?.toString(),
     email: user.email,
     role: user.role,
     fullName: user.fullName || `${user.first_name} ${user.last_name}`,
   };
+};
+
+/**
+ * Genera un token aleatorio seguro para activación/recuperación
+ * @returns {string} - Token hexadecimal de 32 bytes
+ */
+export const generateSecureToken = () => {
+  return crypto.randomBytes(32).toString("hex");
+};
+
+/**
+ * Genera un token de activación con expiración de 1 hora
+ * @returns {Object} - { token, expires }
+ */
+export const generateActivationToken = () => {
+  const token = generateSecureToken();
+  const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
+  return { token, expires };
+};
+
+/**
+ * Genera un token de recuperación de contraseña con expiración de 1 hora
+ * @returns {Object} - { token, expires }
+ */
+export const generatePasswordResetToken = () => {
+  const token = generateSecureToken();
+  const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
+  return { token, expires };
 };

@@ -1,0 +1,1058 @@
+{
+  "info": {
+    "_postman_id": "70cdd19e-4696-4075-ae41-9cdbb4cc1168",
+    "name": "CoderHouse BackendV2 - Coleccion Completa",
+    "description": "Colección completa de endpoints para el sistema E-Commerce con arquitectura DAO/DTO/Repository",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "855183"
+  },
+  "item": [
+    {
+      "name": "Authentication & Sessions",
+      "item": [
+        {
+          "name": "Registrar Usuario",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"Juan\",\n  \"last_name\": \"Pérez\",\n  \"email\": \"user@test.com\",\n  \"age\": 25,\n  \"password\": \"Password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/users/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "register"]
+            },
+            "description": "Registro público de usuarios. Retorna UserDTO (sin password)"
+          },
+          "response": []
+        },
+        {
+          "name": "Iniciar Sesión",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.token) {",
+                  "    pm.environment.set(\"auth_token\", jsonData.data.token);",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@gmail.com\",\n  \"password\": \"Rr123456\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/sessions/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sessions", "login"]
+            },
+            "description": "Login con email y password. Retorna UserDTO + JWT token. El token se guarda automáticamente en la variable de entorno."
+          },
+          "response": []
+        },
+        {
+          "name": "Usuario Actual",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{auth_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/sessions/current",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sessions", "current"]
+            },
+            "description": "Obtiene información del usuario autenticado. Retorna UserDTO."
+          },
+          "response": []
+        },
+        {
+          "name": "Validar Token",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{auth_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/sessions/validate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sessions", "validate"]
+            },
+            "description": "Valida si el token JWT es válido y retorna UserDTO."
+          },
+          "response": []
+        },
+        {
+          "name": "Cambiar Contraseña",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{auth_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"Password123\",\n  \"newPassword\": \"NewPassword456\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/sessions/change-password",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sessions", "change-password"]
+            },
+            "description": "Cambiar la contraseña del usuario autenticado."
+          },
+          "response": []
+        },
+        {
+          "name": "Solicitar Recuperación de Contraseña",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@test.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/sessions/request-password-reset",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sessions", "request-password-reset"]
+            },
+            "description": "Solicita un email de recuperación de contraseña. Envía un email con un token único que expira en 1 hora."
+          },
+          "response": []
+        },
+        {
+          "name": "Restablecer Contraseña con Token",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"abc123xyz789token_de_recuperacion\",\n  \"newPassword\": \"NuevaPassword123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/sessions/reset-password",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sessions", "reset-password"]
+            },
+            "description": "Restablece la contraseña usando el token recibido por email. El token debe ser válido y no haber expirado."
+          },
+          "response": []
+        },
+        {
+          "name": "Activar Cuenta con Token",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"abc123xyz789token_de_activacion\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/sessions/activate-account",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sessions", "activate-account"]
+            },
+            "description": "Activa la cuenta de usuario usando el token recibido por email. Solo necesario si EMAIL_ACTIVATION_REQUIRED=true."
+          },
+          "response": []
+        },
+        {
+          "name": "Renovar Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.token) {",
+                  "    pm.environment.set(\"auth_token\", jsonData.data.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{auth_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/sessions/refresh",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sessions", "refresh"]
+            },
+            "description": "Renueva el token JWT. El nuevo token se guarda automáticamente."
+          },
+          "response": []
+        },
+        {
+          "name": "Cerrar Sesión",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{auth_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/sessions/logout",
+              "host": ["{{base_url}}"],
+              "path": ["api", "sessions", "logout"]
+            },
+            "description": "Cierra la sesión del usuario."
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints de autenticación y gestión de sesiones"
+    },
+    {
+      "name": "Users (Admin)",
+      "item": [
+        {
+          "name": "Listar Usuarios",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{auth_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/users?page=1&limit=10&role=user",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "role",
+                  "value": "user",
+                  "description": "Filtrar por role: user o admin"
+                }
+              ]
+            },
+            "description": "Lista todos los usuarios (solo admin). Retorna array de UserDTOs con paginación."
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener Usuario por ID",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{auth_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/users/:id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "68fcde948b3075d155497f5a"
+                }
+              ]
+            },
+            "description": "Obtiene un usuario específico por ID (solo admin). Retorna UserDTO."
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar Usuario",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{auth_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"Juan Actualizado\",\n  \"age\": 30,\n  \"role\": \"user\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/users/:id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "68fcde948b3075d155497f5a"
+                }
+              ]
+            },
+            "description": "Actualiza un usuario (solo admin). Retorna UserDTO actualizado."
+          },
+          "response": []
+        },
+        {
+          "name": "Eliminar Usuario",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{auth_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/users/:id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "68fcde948b3075d155497f5a"
+                }
+              ]
+            },
+            "description": "Elimina un usuario (solo admin). También elimina su carrito activo."
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener Mi Perfil",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{auth_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/users/profile/me",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "profile", "me"]
+            },
+            "description": "Obtiene el perfil del usuario autenticado. Retorna UserDTO."
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar Mi Perfil",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{auth_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"Nuevo Nombre\",\n  \"last_name\": \"Nuevo Apellido\",\n  \"age\": 28\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/users/profile/me",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "profile", "me"]
+            },
+            "description": "Actualiza el perfil del usuario autenticado. No puede cambiar email, role o password. Retorna UserDTO."
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints de gestión de usuarios (requiere autenticación)"
+    },
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "Listar Productos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/products?page=1&limit=10&category=&sort=price_asc&minPrice=&maxPrice=",
+              "host": ["{{base_url}}"],
+              "path": ["api", "products"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "category",
+                  "value": "",
+                  "description": "Filtrar por categoría"
+                },
+                {
+                  "key": "sort",
+                  "value": "price_asc",
+                  "description": "price_asc, price_desc, title_asc, title_desc"
+                },
+                {
+                  "key": "minPrice",
+                  "value": ""
+                },
+                {
+                  "key": "maxPrice",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Lista productos con filtros y paginación. Retorna ProductDTOs."
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener Producto por ID (Admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{auth_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/products/:id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "products", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "691909aaabde6bc324693797"
+                }
+              ]
+            },
+            "description": "Obtiene un producto por ID. Retorna ProductDTO."
+          },
+          "response": []
+        },
+        {
+          "name": "Crear Producto (Admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{auth_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "title",
+                  "value": "Producto Nuevo",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "Descripción del producto",
+                  "type": "text"
+                },
+                {
+                  "key": "code",
+                  "value": "PROD-001",
+                  "type": "text"
+                },
+                {
+                  "key": "price",
+                  "value": "1500",
+                  "type": "text"
+                },
+                {
+                  "key": "stock",
+                  "value": "50",
+                  "type": "text"
+                },
+                {
+                  "key": "category",
+                  "value": "Alimentos",
+                  "type": "text"
+                },
+                {
+                  "key": "thumbnail",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/products",
+              "host": ["{{base_url}}"],
+              "path": ["api", "products"]
+            },
+            "description": "Crea un nuevo producto (solo admin). Soporta upload de imagen. Retorna ProductDTO."
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar Producto (Admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{auth_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "title",
+                  "value": "Producto Actualizado",
+                  "type": "text"
+                },
+                {
+                  "key": "price",
+                  "value": "1800",
+                  "type": "text"
+                },
+                {
+                  "key": "stock",
+                  "value": "100",
+                  "type": "text"
+                },
+                {
+                  "key": "thumbnail",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/products/:id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "products", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "6915c4f3159089f15cd9804e"
+                }
+              ]
+            },
+            "description": "Actualiza un producto (solo admin). Retorna ProductDTO actualizado."
+          },
+          "response": []
+        },
+        {
+          "name": "Eliminar Producto (Admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{auth_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/products/:id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "products", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "6915c4f3159089f15cd9804e"
+                }
+              ]
+            },
+            "description": "Elimina un producto (solo admin). También elimina la imagen asociada."
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints de gestión de productos"
+    },
+    {
+      "name": "Cart",
+      "item": [
+        {
+          "name": "Obtener Mi Carrito",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{auth_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/carts",
+              "host": ["{{base_url}}"],
+              "path": ["api", "carts"]
+            },
+            "description": "Obtiene el carrito activo del usuario autenticado. Retorna CartDTO con productos populados."
+          },
+          "response": []
+        },
+        {
+          "name": "Agregar Producto al Carrito",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{auth_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"691909aaabde6bc324693797\",\n  \"quantity\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/carts/products",
+              "host": ["{{base_url}}"],
+              "path": ["api", "carts", "products"]
+            },
+            "description": "Agrega un producto al carrito. Valida stock disponible. Crea el carrito si no existe. Retorna CartDTO actualizado."
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar Cantidad de Producto",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{auth_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 3\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/carts/products/:productId",
+              "host": ["{{base_url}}"],
+              "path": ["api", "carts", "products", ":productId"],
+              "variable": [
+                {
+                  "key": "productId",
+                  "value": "691909aaabde6bc324693797"
+                }
+              ]
+            },
+            "description": "Actualiza la cantidad de un producto en el carrito. Valida stock disponible. Devuelve/descuenta stock automáticamente. Retorna CartDTO."
+          },
+          "response": []
+        },
+        {
+          "name": "Eliminar Producto del Carrito",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{auth_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/carts/products/:productId",
+              "host": ["{{base_url}}"],
+              "path": ["api", "carts", "products", ":productId"],
+              "variable": [
+                {
+                  "key": "productId",
+                  "value": "6915c4f3159089f15cd9804e"
+                }
+              ]
+            },
+            "description": "Elimina un producto del carrito. Devuelve el stock automáticamente. Retorna CartDTO actualizado."
+          },
+          "response": []
+        },
+        {
+          "name": "Vaciar Carrito",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{auth_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/carts",
+              "host": ["{{base_url}}"],
+              "path": ["api", "carts"]
+            },
+            "description": "Vacía completamente el carrito. Devuelve todo el stock automáticamente."
+          },
+          "response": []
+        },
+        {
+          "name": "Finalizar Compra (Purchase)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.ticket) {",
+                  "    pm.environment.set(\"last_ticket_id\", jsonData.data.ticket.id);",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{auth_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/carts/:cartId/purchase",
+              "host": ["{{base_url}}"],
+              "path": ["api", "carts", ":cartId", "purchase"],
+              "variable": [
+                {
+                  "key": "cartId",
+                  "value": "6919111f0d840f2bc877364b"
+                }
+              ]
+            },
+            "description": "Finaliza la compra del carrito. Valida stock de cada producto. Crea un Ticket. Cambia el carrito a 'completed'. Retorna TicketDTO y lista de productos procesados/no procesados."
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints de gestión del carrito (solo usuarios con role 'user')"
+    },
+    {
+      "name": "Tickets",
+      "item": [
+        {
+          "name": "Listar Mis Compras",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{auth_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/tickets?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tickets"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Lista todos los tickets del usuario autenticado. Retorna TicketDTOs con paginación."
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener Detalle de Compra",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{auth_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/tickets/:id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tickets", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{last_ticket_id}}"
+                }
+              ]
+            },
+            "description": "Obtiene el detalle de un ticket específico. Incluye productos con cantidades y precios. Retorna TicketDTO con carrito populado."
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints de tickets/compras (solo usuarios con role 'user')"
+    },
+    {
+      "name": "System",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/health",
+              "host": ["{{base_url}}"],
+              "path": ["api", "health"]
+            },
+            "description": "Verifica el estado del servidor y la conexión a MongoDB."
+          },
+          "response": []
+        },
+        {
+          "name": "API Documentation",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/docs",
+              "host": ["{{base_url}}"],
+              "path": ["docs"]
+            },
+            "description": "Retorna la documentación completa de la API en formato JSON."
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints de sistema y utilidades"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "auth_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "last_ticket_id",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

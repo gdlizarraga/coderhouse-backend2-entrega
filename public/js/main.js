@@ -31,11 +31,20 @@ function removeAuthToken() {
 async function authenticatedFetch(url, options = {}) {
   const token = getAuthToken();
 
+  // No incluir Content-Type si se está enviando FormData
+  const isFormData = options.body instanceof FormData;
+
+  const defaultHeaders = {
+    ...(token && { Authorization: `Bearer ${token}` }),
+  };
+
+  // Solo agregar Content-Type si NO es FormData
+  if (!isFormData && !options.headers?.hasOwnProperty("Content-Type")) {
+    defaultHeaders["Content-Type"] = "application/json";
+  }
+
   const defaultOptions = {
-    headers: {
-      "Content-Type": "application/json",
-      ...(token && { Authorization: `Bearer ${token}` }),
-    },
+    headers: defaultHeaders,
   };
 
   const mergedOptions = {
@@ -123,7 +132,13 @@ function updateNavbarWithUser(user) {
       <li class="nav-item">
         <a class="nav-link" href="/users">
           <i class="bi bi-people me-1"></i>
-          Gestionar Usuarios
+          Usuarios
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="/products">
+          <i class="bi bi-box-seam me-1"></i>
+          Productos
         </a>
       </li>
       `
@@ -192,38 +207,15 @@ function updateHomePageContent(user) {
   // Buscar la sección principal (jumbotron) que contiene los botones de login/register
   const jumbotron = document.querySelector(".jumbotron");
   if (jumbotron && user) {
-    // Contenido específico según el rol del usuario
-    let additionalContent = "";
-    if (user.role === "admin") {
-      additionalContent = `
-        <div class="mt-4">
-          <div class="alert alert-info border-0 shadow-sm">
-            <i class="bi bi-info-circle me-2"></i>
-            <strong>Panel de Administrador:</strong> 
-            Usa el menú "Gestionar Usuarios" para acceder al panel de administración.
-          </div>
-        </div>
-      `;
-    }
-
     // Reemplazar el contenido con la vista para usuarios autenticados
     jumbotron.innerHTML = `
-      <h1 class="display-4">
+      <h4 class="display-7">
         ¡Bienvenido, ${user.fullName || user.first_name || user.email}!
-      </h1>
-      <p class="lead">
-        Has iniciado sesión exitosamente en el Sistema de Gestión de Usuarios
-      </p>
-      <hr class="my-4" style="border-color: rgba(255,255,255,0.3);">
-      <p>
-        <i class="bi bi-shield-check me-2"></i>
-        Tu rol actual es: <strong>${user.role}</strong>
-      </p>
-      ${additionalContent}
+      </h4>
     `;
 
     // Cambiar las clases para que tenga el mismo estilo que la versión autenticada
-    jumbotron.className = "jumbotron bg-primary text-white p-5 rounded mb-4";
+    jumbotron.className = "jumbotron bg-warning text-white p-3 rounded mb-4";
   }
 
   // Ocultar la sección de características si existe (es para usuarios no autenticados)
@@ -280,7 +272,6 @@ function capitalize(str) {
 function getRoleBadge(role) {
   const badges = {
     admin: "bg-danger",
-    premium: "bg-warning text-dark",
     user: "bg-primary",
   };
   return badges[role] || "bg-secondary";
@@ -290,7 +281,6 @@ function getRoleBadge(role) {
 function getRoleIcon(role) {
   const icons = {
     admin: "shield-fill-exclamation",
-    premium: "star-fill",
     user: "person-circle",
   };
   return icons[role] || "person";
@@ -350,6 +340,64 @@ function showFieldErrors(form, errors) {
   });
 }
 
+// Función para cargar el contador del carrito
+async function loadCartBadge() {
+  const cartBadge = document.getElementById("cartBadge");
+  const cartLink = document.getElementById("cartLink");
+
+  console.log("🔍 loadCartBadge - Elementos encontrados:", {
+    cartBadge: !!cartBadge,
+    cartLink: !!cartLink,
+    cartLinkDisplay: cartLink
+      ? window.getComputedStyle(cartLink).display
+      : "N/A",
+    cartLinkVisible: cartLink
+      ? window.getComputedStyle(cartLink).visibility
+      : "N/A",
+  });
+
+  // Solo ejecutar si los elementos existen (usuario con role "user")
+  if (!cartBadge || !cartLink) {
+    console.log("❌ No se encontraron elementos del carrito");
+    return;
+  }
+
+  try {
+    const response = await fetch("/api/carts", {
+      credentials: "include",
+    });
+
+    console.log("📡 Respuesta de /api/carts:", response.status);
+
+    if (response.ok) {
+      const result = await response.json();
+      console.log("✅ Datos del carrito:", result);
+
+      if (result.success && result.data.products) {
+        const totalItems = result.data.products.reduce(
+          (sum, item) => sum + item.quantity,
+          0
+        );
+
+        console.log("🛒 Total items en carrito:", totalItems);
+
+        if (totalItems > 0) {
+          cartBadge.textContent = totalItems;
+          cartBadge.classList.remove("d-none");
+          console.log("✅ Badge actualizado con", totalItems, "items");
+        } else {
+          cartBadge.classList.add("d-none");
+          console.log("⚠️ Badge ocultado (0 items)");
+        }
+      }
+    }
+    // Si hay error 404 o cualquier otro, simplemente no mostramos el badge
+  } catch (error) {
+    // Silenciosamente ignorar errores
+    console.log("❌ Error al cargar el carrito:", error);
+  }
+}
+
 // Inicialización cuando el DOM está listo
 document.addEventListener("DOMContentLoaded", function () {
   // Configurar tooltips de Bootstrap
@@ -399,6 +447,9 @@ document.addEventListener("DOMContentLoaded", function () {
       });
   }
 
+  // Cargar el badge del carrito si el usuario está autenticado
+  loadCartBadge();
+
   // Manejar enlaces que requieren autenticación
   const protectedLinks = document.querySelectorAll("[data-require-auth]");
   protectedLinks.forEach((link) => {
@@ -441,3 +492,4 @@ window.debounce = debounce;
 window.setButtonLoading = setButtonLoading;
 window.clearFormErrors = clearFormErrors;
 window.showFieldErrors = showFieldErrors;
+window.loadCartBadge = loadCartBadge;

@@ -1,7 +1,12 @@
 import express from "express";
-import User from "../models/User.js";
-import Cart from "../models/Cart.js";
-import { generateToken, createJWTPayload } from "../utils/auth.js";
+import UserRepository from "../repositories/UserRepository.js";
+import CartDAO from "../dao/CartDAO.js";
+import {
+  generateToken,
+  createJWTPayload,
+  generateActivationToken,
+} from "../utils/auth.js";
+import { sendWelcomeEmail } from "../config/email.js";
 import {
   authenticateJWT,
   authorizeRoles,
@@ -16,17 +21,17 @@ import {
 const router = express.Router();
 
 /**
- * @route   POST /api/users/signup
- * @desc    Registro público de usuarios - solo rol "user"
- * @access  Public
+ * @route   POST /api/users/register
+ * @desc    Crear un nuevo usuario (solo admin) - con rol personalizable
+ * @access  Private/Admin
  */
-router.post("/signup", validatePublicUserRegistration, async (req, res) => {
+router.post("/register", validateUserRegistration, async (req, res) => {
   try {
-    const { first_name, last_name, email, age, password } = req.body;
+    const { first_name, last_name, email, age, password, role } = req.body;
 
     // Verificar si el usuario ya existe
-    const existingUser = await User.findByEmail(email);
-    if (existingUser) {
+    const emailExists = await UserRepository.emailExists(email);
+    if (emailExists) {
       return res.status(409).json({
         success: false,
         message: "Ya existe un usuario con este email",
@@ -34,210 +39,79 @@ router.post("/signup", validatePublicUserRegistration, async (req, res) => {
       });
     }
 
-    // Crear un carrito vacío para el nuevo usuario
-    const newCart = new Cart();
-    const savedCart = await newCart.save();
+    // Verificar si se requiere activación por email
+    const emailActivationRequired =
+      process.env.EMAIL_ACTIVATION_REQUIRED === "true";
 
-    // Crear el nuevo usuario siempre con rol "user"
-    const newUser = new User({
+    let activationToken = null;
+    let activationExpires = null;
+    let isActive = !emailActivationRequired; // Si no se requiere activación, la cuenta está activa
+
+    // Solo generar token si la activación está habilitada
+    if (emailActivationRequired) {
+      const tokenData = generateActivationToken();
+      activationToken = tokenData.token;
+      activationExpires = tokenData.expires;
+    }
+
+    // Crear el nuevo usuario usando el Repository
+    const userData = {
       first_name,
       last_name,
       email,
       age,
-      password, // Se encriptará automáticamente por el middleware del modelo
-      cart: savedCart._id,
-      role: "user", // Siempre "user" para registro público
-    });
+      password,
+      role,
+      isActive,
+      activationToken,
+      activationTokenExpires: activationExpires,
+    };
+    const newUser = await UserRepository.create(userData);
 
-    const savedUser = await newUser.save();
+    // Enviar email de bienvenida solo si la activación está habilitada
+    if (emailActivationRequired) {
+      sendWelcomeEmail(newUser.toJSON(), activationToken).catch((error) => {
+        console.error("Error enviando email de bienvenida:", error);
+      });
+    }
 
-    // Remover la contraseña del response
-    const userResponse = savedUser.toObject();
-    delete userResponse.password;
+    // Generar token JWT
+    const tokenPayload = newUser.toJWTPayload();
+    const token = generateToken(tokenPayload);
+
+    const message = emailActivationRequired
+      ? "Usuario registrado exitosamente. Por favor revisa tu email para activar tu cuenta."
+      : "Usuario registrado exitosamente.";
 
     res.status(201).json({
       success: true,
-      message: "Usuario registrado exitosamente",
+      message,
       data: {
-        user: userResponse,
+        user: newUser.toJSON(),
+        token,
+        expiresIn: "24h",
+        activationRequired: emailActivationRequired,
       },
     });
   } catch (error) {
-    console.error("Error en registro de usuario:", error);
+    console.error("Error al registrar usuario:", error);
 
-    if (error.name === "ValidationError") {
-      const errors = Object.values(error.errors).map((err) => ({
-        field: err.path,
-        message: err.message,
-      }));
-
-      return res.status(400).json({
+    // Error de duplicado en MongoDB
+    if (error.code === 11000) {
+      return res.status(409).json({
         success: false,
-        message: "Error de validación",
-        errors,
+        message: "Ya existe un usuario con este email",
+        code: "DUPLICATE_EMAIL",
       });
     }
 
     res.status(500).json({
       success: false,
-      message: "Error interno del servidor",
-      code: "INTERNAL_SERVER_ERROR",
+      message: "Error interno del servidor al registrar usuario",
+      error: error.message,
     });
   }
 });
-
-/**
- * @route   POST /api/users/signup_test
- * @desc    Registro público de usuarios para poder registrar un rol - solo para pruebas, esto no existiria en produccion
- * @access  Public
- */
-router.post(
-  "/signup_test",
-  validatePublicUserRegistration,
-  async (req, res) => {
-    try {
-      const { first_name, last_name, email, age, password } = req.body;
-
-      // Verificar si el usuario ya existe
-      const existingUser = await User.findByEmail(email);
-      if (existingUser) {
-        return res.status(409).json({
-          success: false,
-          message: "Ya existe un usuario con este email",
-          code: "EMAIL_ALREADY_EXISTS",
-        });
-      }
-
-      // Crear un carrito vacío para el nuevo usuario
-      const newCart = new Cart();
-      const savedCart = await newCart.save();
-
-      // Crear el nuevo usuario siempre con rol "user"
-      const newUser = new User({
-        first_name,
-        last_name,
-        email,
-        age,
-        password, // Se encriptará automáticamente por el middleware del modelo
-        cart: savedCart._id,
-        role: "admin", // Siempre "admin" para testeo
-      });
-
-      const savedUser = await newUser.save();
-
-      // Remover la contraseña del response
-      const userResponse = savedUser.toObject();
-      delete userResponse.password;
-
-      res.status(201).json({
-        success: true,
-        message: "Usuario Administrador registrado exitosamente",
-        data: {
-          user: userResponse,
-        },
-      });
-    } catch (error) {
-      console.error("Error en registro de usuario Administrador:", error);
-
-      if (error.name === "ValidationError") {
-        const errors = Object.values(error.errors).map((err) => ({
-          field: err.path,
-          message: err.message,
-        }));
-
-        return res.status(400).json({
-          success: false,
-          message: "Error de validación",
-          errors,
-        });
-      }
-
-      res.status(500).json({
-        success: false,
-        message: "Error interno del servidor",
-        code: "INTERNAL_SERVER_ERROR",
-      });
-    }
-  }
-);
-
-/**
- * @route   POST /api/users/register
- * @desc    Crear un nuevo usuario (solo admin) - con rol personalizable
- * @access  Private/Admin
- */
-router.post(
-  "/register",
-  authenticateJWT,
-  authorizeRoles("admin"),
-  validateUserRegistration,
-  async (req, res) => {
-    try {
-      const { first_name, last_name, email, age, password, role } = req.body;
-
-      // Verificar si el usuario ya existe
-      const existingUser = await User.findByEmail(email);
-      if (existingUser) {
-        return res.status(409).json({
-          success: false,
-          message: "Ya existe un usuario con este email",
-          code: "EMAIL_ALREADY_EXISTS",
-        });
-      }
-
-      // Crear un carrito vacío para el nuevo usuario
-      const newCart = new Cart();
-      const savedCart = await newCart.save();
-
-      // Crear el nuevo usuario con el rol especificado
-      const newUser = new User({
-        first_name,
-        last_name,
-        email,
-        age,
-        password, // Se encriptará automáticamente por el middleware del modelo
-        cart: savedCart._id,
-        role: role || "user", // Permitir cualquier rol desde admin
-      });
-
-      const savedUser = await newUser.save();
-
-      // Generar token JWT
-      const tokenPayload = createJWTPayload(savedUser);
-      const token = generateToken(tokenPayload);
-
-      // Populate cart para la respuesta
-      await savedUser.populate("cart");
-
-      res.status(201).json({
-        success: true,
-        message: "Usuario registrado exitosamente",
-        data: {
-          user: savedUser.toJSON(),
-          token,
-          expiresIn: "24h",
-        },
-      });
-    } catch (error) {
-      console.error("Error al registrar usuario:", error);
-
-      // Error de duplicado en MongoDB
-      if (error.code === 11000) {
-        return res.status(409).json({
-          success: false,
-          message: "Ya existe un usuario con este email",
-          code: "DUPLICATE_EMAIL",
-        });
-      }
-
-      res.status(500).json({
-        success: false,
-        message: "Error interno del servidor al registrar usuario",
-        error: error.message,
-      });
-    }
-  }
-);
 
 /**
  * @route   GET /api/users
@@ -250,7 +124,7 @@ router.get("/", authenticateJWT, authorizeRoles("admin"), async (req, res) => {
 
     // Construir filtros
     const filters = {};
-    if (role && ["user", "admin", "premium"].includes(role)) {
+    if (role && ["user", "admin"].includes(role)) {
       filters.role = role;
     }
 
@@ -263,26 +137,29 @@ router.get("/", authenticateJWT, authorizeRoles("admin"), async (req, res) => {
     }
 
     const options = {
-      page: parseInt(page),
       limit: parseInt(limit),
-      populate: "cart",
-      select: "-password",
+      skip: (parseInt(page) - 1) * parseInt(limit),
       sort: { createdAt: -1 },
     };
 
-    const users = (await User.paginate)
-      ? await User.paginate(filters, options)
-      : await User.find(filters)
-          .populate("cart")
-          .select("-password")
-          .sort({ createdAt: -1 })
-          .limit(parseInt(limit))
-          .skip((parseInt(page) - 1) * parseInt(limit));
+    const users = await UserRepository.getAll(filters, options);
+    const total = await UserRepository.count(filters);
 
     res.json({
       success: true,
       message: "Usuarios obtenidos exitosamente",
-      data: users,
+      data: {
+        users: users.map((u) => u.toJSON()),
+        totalUsers: total,
+        currentPage: parseInt(page),
+        totalPages: Math.ceil(total / parseInt(limit)),
+        pagination: {
+          currentPage: parseInt(page),
+          totalPages: Math.ceil(total / parseInt(limit)),
+          totalUsers: total,
+          limit: parseInt(limit),
+        },
+      },
     });
   } catch (error) {
     console.error("Error al obtener usuarios:", error);
@@ -303,7 +180,7 @@ router.get("/:id", authenticateJWT, ensureOwnership, async (req, res) => {
   try {
     const { id } = req.params;
 
-    const user = await User.findById(id).populate("cart").select("-password");
+    const user = await UserRepository.getById(id);
 
     if (!user) {
       return res.status(404).json({
@@ -316,7 +193,7 @@ router.get("/:id", authenticateJWT, ensureOwnership, async (req, res) => {
     res.json({
       success: true,
       message: "Usuario obtenido exitosamente",
-      data: user,
+      data: user.toJSON(),
     });
   } catch (error) {
     console.error("Error al obtener usuario:", error);
@@ -350,12 +227,8 @@ router.put(
 
       // Si se actualiza el email, verificar que no exista
       if (updates.email) {
-        const existingUser = await User.findOne({
-          email: updates.email,
-          _id: { $ne: id },
-        });
-
-        if (existingUser) {
+        const existingUser = await UserRepository.getByEmail(updates.email);
+        if (existingUser && existingUser.id !== id) {
           return res.status(409).json({
             success: false,
             message: "Ya existe un usuario con este email",
@@ -364,12 +237,7 @@ router.put(
         }
       }
 
-      const updatedUser = await User.findByIdAndUpdate(id, updates, {
-        new: true,
-        runValidators: true,
-      })
-        .populate("cart")
-        .select("-password");
+      const updatedUser = await UserRepository.update(id, updates);
 
       if (!updatedUser) {
         return res.status(404).json({
@@ -382,7 +250,7 @@ router.put(
       res.json({
         success: true,
         message: "Usuario actualizado exitosamente",
-        data: updatedUser,
+        data: updatedUser.toJSON(),
       });
     } catch (error) {
       console.error("Error al actualizar usuario:", error);
@@ -413,7 +281,7 @@ router.delete("/:id", authenticateJWT, ensureOwnership, async (req, res) => {
   try {
     const { id } = req.params;
 
-    const user = await User.findById(id);
+    const user = await UserRepository.getById(id);
 
     if (!user) {
       return res.status(404).json({
@@ -424,21 +292,18 @@ router.delete("/:id", authenticateJWT, ensureOwnership, async (req, res) => {
     }
 
     // Eliminar el carrito asociado si existe
-    if (user.cart) {
-      await Cart.findByIdAndDelete(user.cart);
-    }
+    await CartDAO.deleteById({ user: id });
 
     // Eliminar el usuario
-    await User.findByIdAndDelete(id);
+    await UserRepository.delete(id);
 
     res.json({
       success: true,
       message: "Usuario eliminado exitosamente",
       data: {
         deletedUser: {
-          id: user._id,
+          id: user.id,
           email: user.email,
-          fullName: user.fullName,
         },
       },
     });
@@ -459,14 +324,12 @@ router.delete("/:id", authenticateJWT, ensureOwnership, async (req, res) => {
  */
 router.get("/profile/me", authenticateJWT, async (req, res) => {
   try {
-    const user = await User.findById(req.user._id)
-      .populate("cart")
-      .select("-password");
+    const user = await UserRepository.getById(req.user.id);
 
     res.json({
       success: true,
       message: "Perfil obtenido exitosamente",
-      data: user,
+      data: user.toJSON(),
     });
   } catch (error) {
     console.error("Error al obtener perfil:", error);
@@ -496,12 +359,8 @@ router.put(
 
       // Si se actualiza el email, verificar que no exista
       if (updates.email) {
-        const existingUser = await User.findOne({
-          email: updates.email,
-          _id: { $ne: req.user._id },
-        });
-
-        if (existingUser) {
+        const existingUser = await UserRepository.getByEmail(updates.email);
+        if (existingUser && existingUser.id !== req.user.id) {
           return res.status(409).json({
             success: false,
             message: "Ya existe un usuario con este email",
@@ -510,17 +369,12 @@ router.put(
         }
       }
 
-      const updatedUser = await User.findByIdAndUpdate(req.user._id, updates, {
-        new: true,
-        runValidators: true,
-      })
-        .populate("cart")
-        .select("-password");
+      const updatedUser = await UserRepository.update(req.user.id, updates);
 
       res.json({
         success: true,
         message: "Perfil actualizado exitosamente",
-        data: updatedUser,
+        data: updatedUser.toJSON(),
       });
     } catch (error) {
       console.error("Error al actualizar perfil:", error);

@@ -50,7 +50,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // Password confirmation validation
   if (confirmPasswordInput && passwordInput) {
     confirmPasswordInput.addEventListener("input", function () {
       if (this.value !== passwordInput.value) {
@@ -80,7 +79,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // Handle form submission - THIS IS THE CRITICAL PART
   if (registerForm) {
     console.log("Adding submit event listener to form");
 
@@ -109,6 +107,7 @@ document.addEventListener("DOMContentLoaded", function () {
         email: formData.get("email"),
         age: parseInt(formData.get("age")) || null,
         password: formData.get("password"),
+        role: formData.get("role") || "user",
       };
 
       console.log("Sending registration data:", data);
@@ -118,7 +117,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (submitBtn) submitBtn.disabled = true;
         if (registerSpinner) registerSpinner.classList.remove("d-none");
 
-        const response = await fetch("/api/users/signup", {
+        const response = await fetch("/api/users/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),

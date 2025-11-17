@@ -248,7 +248,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 </div>
                 <div>
                     <h6 class="mb-0">${user.first_name} ${user.last_name}</h6>
-                    <small class="text-muted">ID: ${user._id}</small>
+                    <small class="text-muted">ID: ${user.id}</small>
                 </div>
             </div>
         </td>
@@ -272,12 +272,12 @@ document.addEventListener("DOMContentLoaded", function () {
         <td class="text-center">
             <div class="btn-group btn-group-sm" role="group">
                 <button type="button" class="btn btn-outline-primary" 
-                        onclick="editUser('${user._id}')" 
+                        onclick="editUser('${user.id}')" 
                         title="Editar usuario">
                     <i class="bi bi-pencil"></i>
                 </button>
                 <button type="button" class="btn btn-outline-danger" 
-                        onclick="confirmDelete('${user._id}', '${
+                        onclick="confirmDelete('${user.id}', '${
       user.first_name
     } ${user.last_name}')" 
                         title="Eliminar usuario"
@@ -432,11 +432,11 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   async function editUser(userId) {
-    const user = usersData.find((u) => u._id === userId);
+    const user = usersData.find((u) => u.id === userId);
     if (!user) return;
 
     // Llenar formulario
-    document.getElementById("edit_user_id").value = user._id;
+    document.getElementById("edit_user_id").value = user.id;
     document.getElementById("edit_first_name").value = user.first_name;
     document.getElementById("edit_last_name").value = user.last_name;
     document.getElementById("edit_email").value = user.email;

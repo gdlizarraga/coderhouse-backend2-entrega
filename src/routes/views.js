@@ -1,6 +1,6 @@
 import express from "express";
 import jwt from "jsonwebtoken";
-import User from "../models/User.js";
+import UserRepository from "../repositories/UserRepository.js";
 
 const router = express.Router();
 
@@ -15,10 +15,8 @@ const optionalAuth = async (req, res, next) => {
         token,
         process.env.JWT_SECRET || "default_secret_change_in_production"
       );
-      const user = await User.findById(decoded.id) // Cambiado de decoded.userId a decoded.id
-        .select("-password")
-        .populate("cart");
-      // Convertir el objeto Mongoose a un objeto plano para Handlebars
+      const user = await UserRepository.getById(decoded.id);
+      // El DTO ya es un objeto plano
       req.user = user ? user.toJSON() : null;
     }
   } catch (error) {
@@ -34,7 +32,12 @@ const requireAuth = async (req, res, next) => {
     const authHeader = req.headers.authorization;
     const token = authHeader && authHeader.split(" ")[1];
 
+    console.log("requireAuth - URL:", req.originalUrl);
+    console.log("requireAuth - Token encontrado:", !!token);
+    console.log("requireAuth - authHeader:", authHeader);
+
     if (!token) {
+      console.log("requireAuth - No hay token, redirigiendo a /login");
       return res.redirect("/login");
     }
 
@@ -42,18 +45,24 @@ const requireAuth = async (req, res, next) => {
       token,
       process.env.JWT_SECRET || "default_secret_change_in_production"
     );
-    const user = await User.findById(decoded.id) // Cambiado de decoded.userId a decoded.id
-      .select("-password")
-      .populate("cart");
+    const user = await UserRepository.getById(decoded.id);
 
     if (!user) {
+      console.log("requireAuth - Usuario no encontrado, redirigiendo a /login");
       return res.redirect("/login");
     }
 
-    // Convertir el objeto Mongoose a un objeto plano para Handlebars
+    console.log(
+      "requireAuth - Usuario autenticado:",
+      user.email,
+      "Rol:",
+      user.role
+    );
+    // El DTO ya es un objeto plano para Handlebars
     req.user = user.toJSON();
     next();
   } catch (error) {
+    console.log("requireAuth - Error:", error.message);
     return res.redirect("/login");
   }
 };
@@ -75,17 +84,29 @@ const requireAdmin = (req, res, next) => {
 
 // Middleware para obtener token desde cookies o localStorage (para las vistas web)
 const getTokenFromClient = (req, res, next) => {
+  // Deshabilitar caché para las vistas dinámicas
+  res.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
+  res.set("Pragma", "no-cache");
+  res.set("Expires", "0");
+
   // Intentar obtener token desde cookies
   let token = req.cookies?.authToken;
+
+  console.log("getTokenFromClient - URL:", req.originalUrl);
+  console.log("getTokenFromClient - Cookie authToken:", !!token);
 
   // Si no hay token en cookies, buscar en el header Authorization
   if (!token) {
     const authHeader = req.headers.authorization;
     token = authHeader && authHeader.split(" ")[1];
+    console.log("getTokenFromClient - Token desde header:", !!token);
   }
 
   if (token) {
     req.headers.authorization = `Bearer ${token}`;
+    console.log("getTokenFromClient - Token establecido en headers");
+  } else {
+    console.log("getTokenFromClient - No se encontró token");
   }
 
   next();
@@ -93,6 +114,12 @@ const getTokenFromClient = (req, res, next) => {
 
 // Página de inicio
 router.get("/", getTokenFromClient, optionalAuth, (req, res) => {
+  console.log("=== HOME PAGE DEBUG ===");
+  console.log("User object:", req.user);
+  console.log("User role:", req.user?.role);
+  console.log("User full:", JSON.stringify(req.user, null, 2));
+  console.log("======================");
+
   res.render("home", {
     title: "Inicio",
     user: req.user,
@@ -123,6 +150,27 @@ router.get("/register", getTokenFromClient, optionalAuth, (req, res) => {
   });
 });
 
+// Página de activación de cuenta
+router.get("/activate-account", (req, res) => {
+  res.render("activate-account", {
+    title: "Activar Cuenta",
+  });
+});
+
+// Página de solicitar recuperación de contraseña
+router.get("/forgot-password", (req, res) => {
+  res.render("forgot-password", {
+    title: "Recuperar Contraseña",
+  });
+});
+
+// Página de restablecer contraseña
+router.get("/reset-password", (req, res) => {
+  res.render("reset-password", {
+    title: "Restablecer Contraseña",
+  });
+});
+
 // Página de gestión de usuarios (solo admin)
 router.get(
   "/users",
@@ -134,6 +182,21 @@ router.get(
       title: "Gestión de Usuarios",
       user: req.user,
       scripts: ["/js/users-admin.js"],
+    });
+  }
+);
+
+// Página de gestión de productos (solo admin)
+router.get(
+  "/products",
+  getTokenFromClient,
+  requireAuth,
+  requireAdmin,
+  (req, res) => {
+    res.render("products", {
+      title: "Gestión de Productos",
+      user: req.user,
+      scripts: ["/js/products.js"],
     });
   }
 );
@@ -154,6 +217,38 @@ router.get("/settings", getTokenFromClient, requireAuth, (req, res) => {
   res.render("settings", {
     title: "Configuración",
     user: userObject,
+  });
+});
+
+// Página del carrito
+router.get("/cart", getTokenFromClient, requireAuth, (req, res) => {
+  // Convertir el objeto user de Mongoose a objeto plano para Handlebars
+  const userObject = req.user.toObject ? req.user.toObject() : req.user;
+
+  res.render("cart", {
+    title: "Mi Carrito",
+    user: userObject,
+  });
+});
+
+// Página de tickets (historial de compras)
+router.get("/tickets", getTokenFromClient, requireAuth, (req, res) => {
+  const userObject = req.user.toObject ? req.user.toObject() : req.user;
+
+  res.render("tickets", {
+    title: "Mis Compras",
+    user: userObject,
+  });
+});
+
+// Página de detalle de ticket
+router.get("/tickets/:id", getTokenFromClient, requireAuth, (req, res) => {
+  const userObject = req.user.toObject ? req.user.toObject() : req.user;
+
+  res.render("ticket-detail", {
+    title: "Detalle de Compra",
+    user: userObject,
+    ticketId: req.params.id,
   });
 });
 

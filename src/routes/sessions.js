@@ -1,8 +1,16 @@
 import express from "express";
-import User from "../models/User.js";
-import { generateToken, createJWTPayload } from "../utils/auth.js";
+import userRepository from "../repositories/UserRepository.js";
+import {
+  generateToken,
+  createJWTPayload,
+  generatePasswordResetToken,
+} from "../utils/auth.js";
+import { sendPasswordResetEmail } from "../config/email.js";
 import { authenticateLocal, validateCurrentUser } from "../middleware/auth.js";
 import { validateUserLogin } from "../middleware/validation.js";
+import { UserCurrentDTO, UserLoginDTO } from "../utils/dto.js";
+import User from "../models/User.js";
+import bcrypt from "bcrypt";
 
 const router = express.Router();
 
@@ -23,14 +31,14 @@ router.post(
       const tokenPayload = createJWTPayload(user);
       const token = generateToken(tokenPayload);
 
-      // Populate cart para la respuesta
-      await user.populate("cart");
+      // Usar DTO para enviar solo información no sensible
+      const userDTO = new UserLoginDTO(user);
 
       res.json({
         success: true,
         message: "Inicio de sesión exitoso",
         data: {
-          user: user.toJSON(),
+          user: userDTO,
           token,
           expiresIn: "24h",
         },
@@ -59,11 +67,14 @@ router.get("/current", validateCurrentUser, async (req, res) => {
     const tokenPayload = createJWTPayload(user);
     const newToken = generateToken(tokenPayload);
 
+    // Usar DTO para enviar solo información no sensible
+    const userDTO = new UserCurrentDTO(user);
+
     res.json({
       success: true,
       message: "Usuario autenticado correctamente",
       data: {
-        user: user.toJSON(),
+        user: userDTO,
         token: newToken,
         expiresIn: "24h",
         timestamp: new Date().toISOString(),
@@ -87,11 +98,11 @@ router.get("/current", validateCurrentUser, async (req, res) => {
 router.post("/logout", validateCurrentUser, async (req, res) => {
   try {
     // En un sistema JWT stateless, el logout se maneja del lado cliente
-    // eliminando el token. Aquí podríamos actualizar lastLogin
+    // eliminando el token. Aquí podríamos actualizar lastLogin usando Repository
 
-    const user = req.user;
-    user.lastLogin = new Date();
-    await user.save();
+    await userRepository.update(req.user.id, {
+      lastLogin: new Date(),
+    });
 
     res.json({
       success: true,
@@ -160,7 +171,7 @@ router.get("/validate", validateCurrentUser, (req, res) => {
     data: {
       valid: true,
       user: {
-        id: req.user._id,
+        id: req.user.id,
         email: req.user.email,
         role: req.user.role,
         fullName: req.user.fullName,
@@ -195,20 +206,22 @@ router.post("/change-password", validateCurrentUser, async (req, res) => {
       });
     }
 
-    const user = await User.findById(req.user._id);
+    const user = await UserRepository.getById(req.user.id);
 
     // Verificar contraseña actual
-    if (!user.comparePassword(currentPassword)) {
+    const result = await UserRepository.changePassword(
+      req.user.id,
+      currentPassword,
+      newPassword
+    );
+
+    if (!result.success) {
       return res.status(401).json({
         success: false,
-        message: "La contraseña actual es incorrecta",
+        message: result.message,
         code: "INVALID_CURRENT_PASSWORD",
       });
     }
-
-    // Actualizar contraseña (se encriptará automáticamente)
-    user.password = newPassword;
-    await user.save();
 
     res.json({
       success: true,
@@ -223,6 +236,184 @@ router.post("/change-password", validateCurrentUser, async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Error interno del servidor al cambiar contraseña",
+      error: error.message,
+    });
+  }
+});
+
+/**
+ * @route   POST /api/sessions/activate-account
+ * @desc    Activar cuenta de usuario mediante token
+ * @access  Public
+ */
+router.post("/activate-account", async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        message: "Token de activación requerido",
+      });
+    }
+
+    // Buscar usuario con el token y verificar que no haya expirado
+    const user = await User.findOne({
+      activationToken: token,
+      activationTokenExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "Token de activación inválido o expirado",
+        code: "INVALID_OR_EXPIRED_TOKEN",
+      });
+    }
+
+    // Activar la cuenta
+    user.isActive = true;
+    user.activationToken = null;
+    user.activationTokenExpires = null;
+    await user.save();
+
+    res.json({
+      success: true,
+      message: "Cuenta activada exitosamente. Ya puedes iniciar sesión.",
+      data: {
+        email: user.email,
+        activated: true,
+      },
+    });
+  } catch (error) {
+    console.error("Error al activar cuenta:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error interno del servidor al activar cuenta",
+      error: error.message,
+    });
+  }
+});
+
+/**
+ * @route   POST /api/sessions/request-password-reset
+ * @desc    Solicitar recuperación de contraseña
+ * @access  Public
+ */
+router.post("/request-password-reset", async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email requerido",
+      });
+    }
+
+    // Buscar usuario por email
+    const user = await User.findOne({ email: email.toLowerCase() });
+
+    // Por seguridad, siempre responder con éxito
+    // (no revelar si el email existe o no)
+    if (!user) {
+      return res.json({
+        success: true,
+        message:
+          "Si el email existe, recibirás un correo con instrucciones para recuperar tu contraseña",
+      });
+    }
+
+    // Generar token de recuperación
+    const { token: resetToken, expires: resetExpires } =
+      generatePasswordResetToken();
+
+    // Guardar token en el usuario
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = resetExpires;
+    await user.save();
+
+    // Enviar email de recuperación (no bloqueante)
+    sendPasswordResetEmail(user, resetToken).catch((error) => {
+      console.error("Error enviando email de recuperación:", error);
+    });
+
+    res.json({
+      success: true,
+      message:
+        "Si el email existe, recibirás un correo con instrucciones para recuperar tu contraseña",
+      data: {
+        tokenSent: true,
+      },
+    });
+  } catch (error) {
+    console.error("Error al solicitar recuperación de contraseña:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error interno del servidor",
+      error: error.message,
+    });
+  }
+});
+
+/**
+ * @route   POST /api/sessions/reset-password
+ * @desc    Restablecer contraseña mediante token
+ * @access  Public
+ */
+router.post("/reset-password", async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+
+    if (!token || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Token y nueva contraseña son requeridos",
+      });
+    }
+
+    // Validar longitud de contraseña
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: "La contraseña debe tener al menos 6 caracteres",
+      });
+    }
+
+    // Buscar usuario con el token y verificar que no haya expirado
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "Token de recuperación inválido o expirado",
+        code: "INVALID_OR_EXPIRED_TOKEN",
+      });
+    }
+
+    // Actualizar contraseña (el pre-save hook la encriptará)
+    user.password = newPassword;
+    user.resetPasswordToken = null;
+    user.resetPasswordExpires = null;
+    await user.save();
+
+    res.json({
+      success: true,
+      message:
+        "Contraseña restablecida exitosamente. Ya puedes iniciar sesión.",
+      data: {
+        email: user.email,
+        passwordReset: true,
+      },
+    });
+  } catch (error) {
+    console.error("Error al restablecer contraseña:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error interno del servidor al restablecer contraseña",
       error: error.message,
     });
   }

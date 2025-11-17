@@ -1,6 +1,12 @@
 import mongoose from "mongoose";
 
 const cartSchema = new mongoose.Schema({
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+    index: true,
+  },
   products: [
     {
       product: {
@@ -14,11 +20,21 @@ const cartSchema = new mongoose.Schema({
         default: 1,
         min: 1,
       },
+      price: {
+        type: Number,
+        required: true,
+        min: 0,
+      },
     },
   ],
   totalPrice: {
     type: Number,
     default: 0,
+  },
+  status: {
+    type: String,
+    enum: ["active", "completed", "cancelled"],
+    default: "active",
   },
   createdAt: {
     type: Date,
@@ -29,6 +45,12 @@ const cartSchema = new mongoose.Schema({
     default: Date.now,
   },
 });
+
+// Índice compuesto: un usuario solo puede tener un carrito activo
+cartSchema.index(
+  { user: 1, status: 1 },
+  { unique: true, partialFilterExpression: { status: "active" } }
+);
 
 // Middleware para actualizar updatedAt antes de guardar
 cartSchema.pre("save", function (next) {

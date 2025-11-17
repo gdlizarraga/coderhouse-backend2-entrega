@@ -12,6 +12,9 @@ import passport from "./config/passport.js";
 import usersRoutes from "./routes/users.js";
 import sessionsRoutes from "./routes/sessions.js";
 import viewsRoutes from "./routes/views.js";
+import productsRoutes from "./routes/products.js";
+import cartsRoutes from "./routes/carts.js";
+import ticketsRoutes from "./routes/tickets.js";
 
 // Configurar __dirname para ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -86,8 +89,21 @@ app.use(
   })
 );
 
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+// Middleware condicional para parsear JSON (skip si es multipart/form-data)
+app.use((req, res, next) => {
+  if (req.is("multipart/form-data")) {
+    return next();
+  }
+  express.json({ limit: "10mb" })(req, res, next);
+});
+
+app.use((req, res, next) => {
+  if (req.is("multipart/form-data")) {
+    return next();
+  }
+  express.urlencoded({ extended: true, limit: "10mb" })(req, res, next);
+});
+
 app.use(cookieParser());
 
 // Inicializar Passport
@@ -105,6 +121,9 @@ app.use((req, res, next) => {
 // Rutas de la API
 app.use("/api/users", usersRoutes);
 app.use("/api/sessions", sessionsRoutes);
+app.use("/api/products", productsRoutes);
+app.use("/api/carts", cartsRoutes);
+app.use("/api/tickets", ticketsRoutes);
 
 // Ruta de salud del servidor
 app.get("/api/health", (req, res) => {
@@ -124,49 +143,188 @@ app.get("/api/health", (req, res) => {
 app.get("/docs", (req, res) => {
   res.json({
     success: true,
-    message: "API de Sistema CRUD de Usuarios con Autenticación",
+    message: "API de Sistema E-Commerce con Arquitectura DAO/DTO/Repository",
     data: {
-      version: "1.0.0",
+      version: "3.0.0",
+      architecture: {
+        pattern: "DAO/DTO/Repository (3-Layer Architecture)",
+        layers: {
+          dao: {
+            description: "Data Access Objects - Direct database access",
+            location: "src/dao/",
+            files: [
+              "UserDAO.js",
+              "ProductDAO.js",
+              "CartDAO.js",
+              "TicketDAO.js",
+            ],
+            responsibility: "CRUD operations with MongoDB via Mongoose",
+          },
+          dto: {
+            description: "Data Transfer Objects - Data transformation",
+            location: "src/dto/",
+            files: [
+              "UserDTO.js",
+              "ProductDTO.js",
+              "CartDTO.js",
+              "TicketDTO.js",
+            ],
+            responsibility:
+              "Transform _id → id, remove sensitive data (password), format for API",
+          },
+          repository: {
+            description: "Business Logic Layer - Orchestration",
+            location: "src/repositories/",
+            files: [
+              "UserRepository.js",
+              "ProductRepository.js",
+              "CartRepository.js",
+              "TicketRepository.js",
+            ],
+            responsibility:
+              "Business rules, validations, use DAOs, return DTOs",
+          },
+        },
+        benefits: [
+          "Separation of concerns",
+          "Clean API responses (id instead of _id)",
+          "Automatic password removal from responses",
+          "Centralized business logic",
+          "Easy testing with mocks",
+          "Scalable and maintainable",
+        ],
+      },
+      important_changes: {
+        id_format:
+          "All API responses use 'id' (string) instead of '_id' (ObjectId)",
+        security:
+          "UserDTO automatically removes password field from all responses",
+        jwt_payload:
+          "Token payload uses { id, email, role, fullName } with 'id' field",
+        passport:
+          "All Passport strategies integrated with UserRepository and return DTOs",
+        frontend: "All JavaScript files use .id property (not ._id)",
+        backend: "All routes use req.user.id (not req.user._id)",
+      },
       endpoints: {
         health: "/api/health",
         users: {
-          signup: "POST /api/users/signup (Public registration)",
-          signup_test: "POST /api/users/signup_test (Testing - Admin creation)",
-          register: "POST /api/users/register (Admin only)",
-          getAll: "GET /api/users (Admin only)",
-          getById: "GET /api/users/:id",
-          update: "PUT /api/users/:id",
+          register:
+            "POST /api/users/register (Public registration - returns UserDTO)",
+          getAll: "GET /api/users (Admin only - returns UserDTO[])",
+          getById: "GET /api/users/:id (Returns UserDTO)",
+          update: "PUT /api/users/:id (Returns UserDTO)",
           delete: "DELETE /api/users/:id",
-          profile: "GET /api/users/profile/me",
-          updateProfile: "PUT /api/users/profile/me",
+          profile: "GET /api/users/profile/me (Returns UserDTO)",
+          updateProfile: "PUT /api/users/profile/me (Returns UserDTO)",
+        },
+        products: {
+          getAll: "GET /api/products (Returns ProductDTO[])",
+          getById: "GET /api/products/:id (Admin only - returns ProductDTO)",
+          create: "POST /api/products (Admin only - returns ProductDTO)",
+          update: "PUT /api/products/:id (Admin only - returns ProductDTO)",
+          delete: "DELETE /api/products/:id (Admin only)",
+        },
+        carts: {
+          getActive: "GET /api/carts (User only - returns CartDTO)",
+          addProduct: "POST /api/carts/products (User only - returns CartDTO)",
+          updateQuantity:
+            "PUT /api/carts/products/:productId (User only - returns CartDTO)",
+          removeProduct:
+            "DELETE /api/carts/products/:productId (User only - returns CartDTO)",
+          clearCart: "DELETE /api/carts (User only)",
+          purchase:
+            "POST /api/carts/:cid/purchase (User only - returns TicketDTO)",
+        },
+        tickets: {
+          getAll: "GET /api/tickets (User only - returns TicketDTO[])",
+          getById: "GET /api/tickets/:id (User only - returns TicketDTO)",
         },
         sessions: {
-          login: "POST /api/sessions/login",
-          current: "GET /api/sessions/current",
+          login: "POST /api/sessions/login (Returns UserDTO + token)",
+          current: "GET /api/sessions/current (Returns UserDTO)",
           logout: "POST /api/sessions/logout",
           refresh: "POST /api/sessions/refresh",
-          validate: "GET /api/sessions/validate",
+          validate: "GET /api/sessions/validate (Returns UserDTO)",
           changePassword: "POST /api/sessions/change-password",
+          activateAccount:
+            "POST /api/sessions/activate-account (Activate user account with token)",
+          requestPasswordReset:
+            "POST /api/sessions/request-password-reset (Request password reset email)",
+          resetPassword:
+            "POST /api/sessions/reset-password (Reset password with token)",
         },
         web: {
-          home: "GET /",
+          home: "GET / (User only - displays products)",
           login: "GET /login",
           register: "GET /register",
+          forgotPassword: "GET /forgot-password (Request password reset)",
+          resetPassword: "GET /reset-password?token=xxx (Reset password form)",
+          activateAccount: "GET /activate-account?token=xxx (Activate account)",
           profile: "GET /profile (Auth required)",
           settings: "GET /settings (Auth required)",
+          cart: "GET /cart (User only)",
+          tickets: "GET /tickets (User only)",
+          ticketDetail: "GET /tickets/:id (User only)",
           users: "GET /users (Admin only)",
+          products: "GET /products (Admin only)",
         },
       },
+      features: {
+        dao_dto_repository:
+          "Complete 3-layer architecture with separation of concerns",
+        data_transformation:
+          "All responses use 'id' (string) instead of MongoDB's '_id' (ObjectId)",
+        security_enhanced:
+          "DTOs automatically remove sensitive data (passwords) from all API responses",
+        email_system:
+          "Nodemailer integration with account activation and password recovery",
+        account_activation:
+          "Optional email activation with secure tokens (configurable via EMAIL_ACTIVATION_REQUIRED)",
+        password_recovery:
+          "Complete password reset flow with email notifications and secure tokens",
+        shopping_cart:
+          "Multiple carts per user with status workflow (active, completed, cancelled)",
+        stock_management:
+          "Automatic stock increment/decrement on cart operations via CartRepository",
+        purchase_tickets:
+          "Unique ticket generation with purchase history via TicketRepository",
+        sweet_alerts: "SweetAlert2 integration for elegant confirmations",
+        responsive_ui: "Bootstrap 5 with mobile-optimized navbar",
+        passport_integration:
+          "Passport strategies use UserRepository and return DTOs consistently",
+      },
       security: {
-        public_registration: "/api/users/signup - Only 'user' role allowed",
-        admin_registration:
-          "/api/users/register - Any role, admin auth required",
-        testing_endpoint: "/api/users/signup_test - Creates admin (DEV ONLY)",
+        public_registration:
+          "/api/users/register - Public registration with 'user' role",
+        password_hashing:
+          "bcrypt with 12 salt rounds in Mongoose pre-save hook",
+        dto_protection: "UserDTO never exposes password field in API responses",
+        jwt_format: "Payload uses 'id' field for consistency with DTOs",
+        token_validation:
+          "All protected routes validate JWT and populate req.user with UserDTO",
+        activation_tokens:
+          "Secure tokens generated with crypto.randomBytes(32) - 64 char hex",
+        token_expiration: "Activation and reset tokens expire after 1 hour",
+        email_security:
+          "Tokens are single-use and deleted after successful activation/reset",
       },
       documentation: {
         authentication: "Bearer Token JWT requerido para rutas privadas",
         authorization: "Header: Authorization: Bearer <token>",
-        roles: ["user", "admin", "premium"],
+        roles: ["user", "admin"],
+        response_format:
+          "All responses include { success, message, data } with DTOs in data field",
+        id_usage: "Use 'id' field in all API requests/responses (not '_id')",
+      },
+      migration_notes: {
+        breaking_changes:
+          "ID format changed from '_id' to 'id' - update all frontend code",
+        re_login_required:
+          "Users must login again after update to get new token format",
+        frontend_update: "All JavaScript files now use .id instead of ._id",
+        backend_update:
+          "All routes now use req.user.id instead of req.user._id",
       },
     },
   });
@@ -256,11 +414,7 @@ app.listen(PORT, () => {
   console.log(`📝 Documentación: http://localhost:${PORT}/docs`);
   console.log(`\n📋 Endpoints principales:`);
   console.log(`   📝 Registro Público:`);
-  console.log(`   • POST /api/users/signup - Registrar usuario (rol: user)`);
-  console.log(`   🧪 Testing (⚠️ Solo desarrollo):`);
-  console.log(`   • POST /api/users/signup_test - Crear admin para testing`);
-  console.log(`   🔐 Administración:`);
-  console.log(`   • POST /api/users/register - Registrar usuario (admin only)`);
+  console.log(`   • POST /api/users/register - Registrar usuario (rol: user)`);
   console.log(`   🔑 Autenticación:`);
   console.log(`   • POST /api/sessions/login - Iniciar sesión`);
   console.log(`   • GET  /api/sessions/current - Validar usuario actual`);

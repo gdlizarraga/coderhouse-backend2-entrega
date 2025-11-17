@@ -65,8 +65,8 @@ export const validateUserRegistration = [
 
   body("role")
     .optional()
-    .isIn(["user", "admin", "premium"])
-    .withMessage("El rol debe ser: user, admin o premium"),
+    .isIn(["user", "admin"])
+    .withMessage("El rol debe ser: user o admin"),
 
   handleValidationErrors,
 ];
@@ -182,8 +182,100 @@ export const validateUserUpdate = [
 
   body("role")
     .optional()
-    .isIn(["user", "admin", "premium"])
-    .withMessage("El rol debe ser: user, admin o premium"),
+    .isIn(["user", "admin"])
+    .withMessage("El rol debe ser: user o admin"),
+
+  handleValidationErrors,
+];
+
+/**
+ * Validaciones para creación de producto
+ */
+export const validateProductCreation = [
+  body("title")
+    .trim()
+    .notEmpty()
+    .withMessage("El título es obligatorio")
+    .isLength({ min: 3, max: 100 })
+    .withMessage("El título debe tener entre 3 y 100 caracteres"),
+
+  body("description")
+    .trim()
+    .notEmpty()
+    .withMessage("La descripción es obligatoria")
+    .isLength({ min: 10, max: 500 })
+    .withMessage("La descripción debe tener entre 10 y 500 caracteres"),
+
+  body("code")
+    .trim()
+    .notEmpty()
+    .withMessage("El código es obligatorio")
+    .isLength({ min: 2, max: 50 })
+    .withMessage("El código debe tener entre 2 y 50 caracteres")
+    .matches(/^[A-Z0-9-_]+$/)
+    .withMessage(
+      "El código solo puede contener letras mayúsculas, números, guiones y guiones bajos"
+    ),
+
+  body("price")
+    .isFloat({ min: 0 })
+    .withMessage("El precio debe ser un número mayor o igual a 0"),
+
+  body("stock")
+    .isInt({ min: 0 })
+    .withMessage("El stock debe ser un número entero mayor o igual a 0"),
+
+  body("category")
+    .trim()
+    .notEmpty()
+    .withMessage("La categoría es obligatoria")
+    .isLength({ min: 2, max: 50 })
+    .withMessage("La categoría debe tener entre 2 y 50 caracteres"),
+
+  handleValidationErrors,
+];
+
+/**
+ * Validaciones para actualización de producto
+ */
+export const validateProductUpdate = [
+  body("title")
+    .optional()
+    .trim()
+    .isLength({ min: 3, max: 100 })
+    .withMessage("El título debe tener entre 3 y 100 caracteres"),
+
+  body("description")
+    .optional()
+    .trim()
+    .isLength({ min: 10, max: 500 })
+    .withMessage("La descripción debe tener entre 10 y 500 caracteres"),
+
+  body("code")
+    .optional()
+    .trim()
+    .isLength({ min: 2, max: 50 })
+    .withMessage("El código debe tener entre 2 y 50 caracteres")
+    .matches(/^[A-Z0-9-_]+$/)
+    .withMessage(
+      "El código solo puede contener letras mayúsculas, números, guiones y guiones bajos"
+    ),
+
+  body("price")
+    .optional()
+    .isFloat({ min: 0 })
+    .withMessage("El precio debe ser un número mayor o igual a 0"),
+
+  body("stock")
+    .optional()
+    .isInt({ min: 0 })
+    .withMessage("El stock debe ser un número entero mayor o igual a 0"),
+
+  body("category")
+    .optional()
+    .trim()
+    .isLength({ min: 2, max: 50 })
+    .withMessage("La categoría debe tener entre 2 y 50 caracteres"),
 
   handleValidationErrors,
 ];
