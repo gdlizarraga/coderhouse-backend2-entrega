@@ -348,14 +348,14 @@ Editar el archivo `.env`:
 ```env
 NODE_ENV=development
 PORT=8080
-MONGODB_URI=mongodb+srv://coderhouse:coder76495@cluster0.g2busjl.mongodb.net/backend2_coderhouse?retryWrites=true&w=majority&appName=Cluster0
-JWT_SECRET=GustavoLizarragaSecretKey
+MONGODB_URI=XXXXXX
+JWT_SECRET=XXXXX
 JWT_EXPIRES_IN=24h
 
 # Email Configuration MAILTRAP
 EMAIL_SERVICE=smtp
-EMAIL_HOST=sandbox.smtp.mailtrap.io
-EMAIL_PORT=2525
+EMAIL_HOST=XXXXX
+EMAIL_PORT=XXXX
 EMAIL_USER=tu_usuario_mailtrap
 EMAIL_PASSWORD=tu_password_mailtrap
 EMAIL_FROM=noreply@ecommerce.com
